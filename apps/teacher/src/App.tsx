@@ -3,8 +3,12 @@ import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Dashboard from './pages/Dashboard'
 import CreateSession from './pages/CreateSession'
 import Monitor from './pages/Monitor'
+import { useClerkToken } from './hooks'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  // Store Clerk token in memory for API requests
+  useClerkToken();
+
   return (
     <>
       <SignedIn>{children}</SignedIn>
