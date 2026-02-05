@@ -14,6 +14,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'active' | 'ended'>('all')
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function Dashboard() {
         setLoading(false)
       } catch (err) {
         console.error('Failed to load sessions:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load sessions')
         setLoading(false)
       }
     }
@@ -118,6 +120,20 @@ export default function Dashboard() {
           <div className="card text-center py-12">
             <div className="animate-spin text-4xl mb-4">⏳</div>
             <p className="text-gray-600">Loading sessions...</p>
+          </div>
+        ) : error ? (
+          <div className="card text-center py-12">
+            <div className="text-4xl mb-4">❌</div>
+            <h3 className="text-xl font-bold text-red-600 mb-2">
+              Failed to load sessions
+            </h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-primary"
+            >
+              Try Again
+            </button>
           </div>
         ) : filteredSessions.length === 0 ? (
           <div className="card text-center py-12">
