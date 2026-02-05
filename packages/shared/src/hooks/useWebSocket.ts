@@ -78,7 +78,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
         try {
           const data = JSON.parse(event.data);
-          setLastMessage(data);
+          // Only update if data changed to prevent unnecessary re-renders
+          setLastMessage((prev) =>
+            JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
+          );
           if (onMessage) onMessage(data);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
