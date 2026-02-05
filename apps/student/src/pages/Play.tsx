@@ -4,7 +4,7 @@
  * Main gameplay area with games and question prompts
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   sessionAPI,
@@ -20,6 +20,7 @@ export default function Play() {
   const [session, setSession] = useState<Session | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const playerId = sessionStorage.getItem('player_id')
   const playerName = sessionStorage.getItem('player_name')
@@ -54,8 +55,10 @@ export default function Play() {
         if (sessionData.status === 'ended') {
           navigate(`/results/${code}`)
         }
-      } catch {
-        console.error('Failed to load session')
+      } catch (err) {
+        console.error('Failed to load session:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load session')
+        setLoading(false)
       }
     }
 
@@ -63,6 +66,26 @@ export default function Play() {
     const interval = setInterval(fetchData, 5000)
     return () => clearInterval(interval)
   }, [code, navigate])
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <p className="text-lg text-red-400 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setError(null)
+              setLoading(true)
+            }}
+            className="bg-primary px-4 py-2 rounded-lg hover:bg-primary/80"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (loading || !session) {
     return (
