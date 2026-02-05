@@ -21,9 +21,10 @@ export default function Join() {
     setLoading(true)
 
     try {
-      // Validate inputs
-      if (!code || code.length < 4) {
-        setError('Please enter a valid session code')
+      // Validate session code format (alphanumeric, 4-6 characters)
+      const codePattern = /^[A-Z0-9]{4,6}$/
+      if (!code || !codePattern.test(code.toUpperCase())) {
+        setError('Please enter a valid session code (4-6 alphanumeric characters)')
         setLoading(false)
         return
       }
@@ -92,7 +93,7 @@ export default function Join() {
               type="text"
               id="code"
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
               placeholder="ABC123"
               maxLength={6}
               className="w-full px-4 py-3 text-center text-2xl font-mono uppercase border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
