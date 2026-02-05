@@ -1,0 +1,19 @@
+{
+  "name": "review-arcade",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "dev:teacher": "turbo dev --filter=@review-arcade/teacher",
+    "dev:student": "turbo dev --filter=@review-arcade/student",
+    "build:teacher": "turbo build --filter=@review-arcade/teacher",
+    "build:student": "turbo build --filter=@review-arcade/student"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
