@@ -88,13 +88,24 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
         try {
           const data = JSON.parse(event.data);
+
+          // Basic validation: must be an object with a type property
+          if (typeof data !== 'object' || data === null || typeof data.type !== 'string') {
+            if (import.meta.env.DEV) {
+              console.warn('Invalid WebSocket message format:', data);
+            }
+            return;
+          }
+
           // Only update if data changed to prevent unnecessary re-renders
           setLastMessage((prev) =>
             JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
           );
           onMessageRef.current?.(data);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          if (import.meta.env.DEV) {
+            console.warn('Failed to parse WebSocket message:', error);
+          }
         }
       };
 
