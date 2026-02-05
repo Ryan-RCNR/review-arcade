@@ -57,8 +57,8 @@ export default function Lobby() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary flex items-center justify-center">
-        <div className="card text-center">
-          <div className="animate-spin text-6xl mb-4">⏳</div>
+        <div className="card text-center" role="status" aria-live="polite">
+          <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
           <p className="text-lg font-medium">Loading...</p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function Lobby() {
   if (error || !session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary flex items-center justify-center p-4">
-        <div className="card max-w-md text-center">
+        <div className="card max-w-md text-center" role="alert" aria-live="assertive">
           <p className="text-red-600 font-medium mb-4">{error || 'Session not found'}</p>
           <a href="/join" className="btn-primary">
             Join Another Session
@@ -89,8 +89,12 @@ export default function Lobby() {
           <p className="text-xl text-gray-700 mb-4">
             Session Code: <span className="font-mono font-bold">{code}</span>
           </p>
-          <div className="inline-block bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded-lg">
-            <p className="font-medium">⏳ Waiting for teacher to start...</p>
+          <div
+            className="inline-block bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded-lg"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="font-medium"><span aria-hidden="true">⏳</span> Waiting for teacher to start...</p>
           </div>
         </div>
 

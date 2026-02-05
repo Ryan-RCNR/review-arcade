@@ -72,8 +72,8 @@ export default function Play() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="text-6xl mb-4">❌</div>
+        <div className="text-white text-center" role="alert" aria-live="assertive">
+          <div className="text-6xl mb-4" aria-hidden="true">❌</div>
           <p className="text-lg text-red-400 mb-4">{error}</p>
           <button
             onClick={() => {
@@ -92,8 +92,8 @@ export default function Play() {
   if (loading || !session) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin text-6xl mb-4">⏳</div>
+        <div className="text-white text-center" role="status" aria-live="polite">
+          <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
           <p className="text-lg">Loading game...</p>
         </div>
       </div>
