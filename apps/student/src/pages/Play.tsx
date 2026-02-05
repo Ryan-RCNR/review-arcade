@@ -4,7 +4,7 @@
  * Main gameplay area with games and question prompts
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   sessionAPI,
@@ -100,8 +100,17 @@ export default function Play() {
     )
   }
 
-  // Find player's rank
-  const playerRank = leaderboard.find((e) => e.player_id === playerId)
+  // Memoize top leaderboard entries to prevent unnecessary re-renders
+  const topLeaderboard = useMemo(
+    () => leaderboard.slice(0, DEFAULT_LEADERBOARD_LIMIT),
+    [leaderboard]
+  )
+
+  // Find player's rank (memoized)
+  const playerRank = useMemo(
+    () => leaderboard.find((e) => e.player_id === playerId),
+    [leaderboard, playerId]
+  )
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -158,7 +167,7 @@ export default function Play() {
             <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
               <h3 className="text-lg font-bold mb-4">Leaderboard</h3>
               <div className="space-y-2">
-                {leaderboard.slice(0, DEFAULT_LEADERBOARD_LIMIT).map((entry, index) => (
+                {topLeaderboard.map((entry, index) => (
                   <div
                     key={entry.player_id}
                     className={`flex items-center justify-between p-2 rounded ${
