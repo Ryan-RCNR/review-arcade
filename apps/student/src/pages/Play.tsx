@@ -4,7 +4,7 @@
  * Main gameplay area with games and question prompts
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   sessionAPI,
@@ -15,6 +15,13 @@ import {
   type Session,
   type LeaderboardEntry,
 } from '@review-arcade/shared'
+import {
+  PlayHeader,
+  GameArea,
+  LeaderboardSidebar,
+  LoadingDisplay,
+  ErrorDisplay,
+} from '../components'
 
 export default function Play() {
   const { code } = useParams<{ code: string }>()
@@ -53,7 +60,6 @@ export default function Play() {
         setLeaderboard(leaderboardData)
         setLoading(false)
 
-        // If session ended, redirect
         if (sessionData.status === 'ended') {
           navigate(`/results/${code}`)
         }
@@ -69,139 +75,54 @@ export default function Play() {
     return () => clearInterval(interval)
   }, [code, navigate])
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center" role="alert" aria-live="assertive">
-          <div className="text-6xl mb-4" aria-hidden="true">❌</div>
-          <p className="text-lg text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => {
-              setError(null)
-              setLoading(true)
-            }}
-            className="bg-primary px-4 py-2 rounded-lg hover:bg-primary/80"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (loading || !session) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-center" role="status" aria-live="polite">
-          <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
-          <p className="text-lg">Loading game...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Memoize top leaderboard entries to prevent unnecessary re-renders
+  // Memoize leaderboard data
   const topLeaderboard = useMemo(
     () => leaderboard.slice(0, DEFAULT_LEADERBOARD_LIMIT),
     [leaderboard]
   )
 
-  // Find player's rank (memoized)
   const playerRank = useMemo(
     () => leaderboard.find((e) => e.player_id === playerId),
     [leaderboard, playerId]
   )
 
+  const handleRetry = () => {
+    setError(null)
+    setLoading(true)
+  }
+
+  if (error) {
+    return <ErrorDisplay message={error} onRetry={handleRetry} />
+  }
+
+  if (loading || !session) {
+    return <LoadingDisplay />
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">Review Arcade</h1>
-            <p className="text-sm text-gray-400">
-              Session: <span className="font-mono">{code}</span>
-              {isConnected && (
-                <span className="ml-2 text-green-400">● Live</span>
-              )}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="font-medium">{playerName}</p>
-            {playerRank && (
-              <p className="text-sm text-primary">
-                Score: {playerRank.total_score} pts
-              </p>
-            )}
-          </div>
-        </div>
-      </header>
+      <PlayHeader
+        sessionCode={code || ''}
+        playerName={playerName}
+        playerScore={playerRank?.total_score}
+        isConnected={isConnected}
+      />
 
       <div className="p-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Game Area */}
           <div className="lg:col-span-3">
-            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 min-h-[500px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🎮</div>
-                <h2 className="text-2xl font-bold mb-2">Game Area</h2>
-                <p className="text-gray-400 mb-4">
-                  Games will appear here when the session is active
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {session.config.games.map((game) => (
-                    <span
-                      key={game}
-                      className="bg-gray-700 px-4 py-2 rounded-lg text-sm"
-                    >
-                      {game.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <GameArea games={session.config.games} />
           </div>
 
-          {/* Leaderboard Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-              <h3 className="text-lg font-bold mb-4">Leaderboard</h3>
-              <div className="space-y-2">
-                {topLeaderboard.map((entry, index) => (
-                  <div
-                    key={entry.player_id}
-                    className={`flex items-center justify-between p-2 rounded ${
-                      entry.player_id === playerId
-                        ? 'bg-primary/20 border border-primary/50'
-                        : index < 3
-                        ? 'bg-gray-700/50'
-                        : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold w-6 text-center">
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : entry.rank}
-                      </span>
-                      <span className="truncate max-w-[100px]">
-                        {entry.player_name}
-                        {entry.player_id === playerId && ' (You)'}
-                      </span>
-                    </div>
-                    <span className="font-mono text-sm">{entry.total_score}</span>
-                  </div>
-                ))}
-                {leaderboard.length === 0 && (
-                  <p className="text-gray-500 text-center py-4 text-sm">
-                    No scores yet
-                  </p>
-                )}
-              </div>
-            </div>
+            <LeaderboardSidebar
+              entries={topLeaderboard}
+              currentPlayerId={playerId}
+            />
           </div>
         </div>
       </div>
 
-      {/* Debug info */}
       {lastMessage && (
         <div className="fixed bottom-4 right-4 bg-gray-800 p-2 rounded text-xs text-gray-400 max-w-xs">
           Last update: {lastMessage.type}
