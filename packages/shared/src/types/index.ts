@@ -207,8 +207,172 @@ export const AVAILABLE_GAMES: GameInfo[] = [
   },
 ];
 
-// WebSocket Types
+// WebSocket Types - Generic (deprecated, use specific message types)
 export interface WebSocketMessage {
   type: string;
   [key: string]: unknown;
+}
+
+// Server -> Client WebSocket Messages
+export interface WSLobbyUpdate {
+  type: 'lobby_update';
+  players: Player[];
+  player_count: number;
+}
+
+export interface WSPlayerJoined {
+  type: 'player_joined';
+  player: Player;
+  player_count: number;
+}
+
+export interface WSPlayerLeft {
+  type: 'player_left';
+  player_id: string;
+  player_count: number;
+}
+
+export interface WSSessionStarted {
+  type: 'session_started';
+  current_game: GameType;
+}
+
+export interface WSGameStarted {
+  type: 'game_started';
+  game_type: GameType;
+  time_limit_seconds: number;
+}
+
+export interface WSGameEnded {
+  type: 'game_ended';
+  game_type: GameType;
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface WSQuestionAvailable {
+  type: 'question_available';
+  question: Question;
+}
+
+export interface WSScoreUpdate {
+  type: 'score_update';
+  player_id: string;
+  score: number;
+  total_score: number;
+}
+
+export interface WSLeaderboardUpdate {
+  type: 'leaderboard_update';
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface WSSessionEnded {
+  type: 'session_ended';
+  final_leaderboard: LeaderboardEntry[];
+}
+
+export interface WSError {
+  type: 'error';
+  message: string;
+  code?: string;
+}
+
+// Discriminated union of all server messages
+export type ServerWSMessage =
+  | WSLobbyUpdate
+  | WSPlayerJoined
+  | WSPlayerLeft
+  | WSSessionStarted
+  | WSGameStarted
+  | WSGameEnded
+  | WSQuestionAvailable
+  | WSScoreUpdate
+  | WSLeaderboardUpdate
+  | WSSessionEnded
+  | WSError;
+
+// Client -> Server WebSocket Messages
+export interface WSClientInit {
+  type: 'init';
+  player_id?: string;
+  session_code: string;
+}
+
+export interface WSClientAnswer {
+  type: 'answer';
+  question_id: string;
+  answer: string;
+  time_ms: number;
+}
+
+export interface WSClientGameScore {
+  type: 'game_score';
+  game_type: GameType;
+  score: number;
+}
+
+export type ClientWSMessage = WSClientInit | WSClientAnswer | WSClientGameScore;
+
+// Type Guards for WebSocket Messages
+export function isServerWSMessage(msg: unknown): msg is ServerWSMessage {
+  if (!msg || typeof msg !== 'object') return false;
+  const m = msg as Record<string, unknown>;
+  const validTypes = [
+    'lobby_update',
+    'player_joined',
+    'player_left',
+    'session_started',
+    'game_started',
+    'game_ended',
+    'question_available',
+    'score_update',
+    'leaderboard_update',
+    'session_ended',
+    'error',
+  ];
+  return typeof m.type === 'string' && validTypes.includes(m.type);
+}
+
+export function isLobbyUpdate(msg: unknown): msg is WSLobbyUpdate {
+  return isServerWSMessage(msg) && msg.type === 'lobby_update';
+}
+
+export function isPlayerJoined(msg: unknown): msg is WSPlayerJoined {
+  return isServerWSMessage(msg) && msg.type === 'player_joined';
+}
+
+export function isPlayerLeft(msg: unknown): msg is WSPlayerLeft {
+  return isServerWSMessage(msg) && msg.type === 'player_left';
+}
+
+export function isSessionStarted(msg: unknown): msg is WSSessionStarted {
+  return isServerWSMessage(msg) && msg.type === 'session_started';
+}
+
+export function isGameStarted(msg: unknown): msg is WSGameStarted {
+  return isServerWSMessage(msg) && msg.type === 'game_started';
+}
+
+export function isGameEnded(msg: unknown): msg is WSGameEnded {
+  return isServerWSMessage(msg) && msg.type === 'game_ended';
+}
+
+export function isQuestionAvailable(msg: unknown): msg is WSQuestionAvailable {
+  return isServerWSMessage(msg) && msg.type === 'question_available';
+}
+
+export function isScoreUpdate(msg: unknown): msg is WSScoreUpdate {
+  return isServerWSMessage(msg) && msg.type === 'score_update';
+}
+
+export function isLeaderboardUpdate(msg: unknown): msg is WSLeaderboardUpdate {
+  return isServerWSMessage(msg) && msg.type === 'leaderboard_update';
+}
+
+export function isSessionEnded(msg: unknown): msg is WSSessionEnded {
+  return isServerWSMessage(msg) && msg.type === 'session_ended';
+}
+
+export function isWSError(msg: unknown): msg is WSError {
+  return isServerWSMessage(msg) && msg.type === 'error';
 }

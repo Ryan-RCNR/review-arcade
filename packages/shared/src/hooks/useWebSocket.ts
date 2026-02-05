@@ -6,11 +6,14 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { WebSocketMessage } from '../types';
+import type { ServerWSMessage, ClientWSMessage, WebSocketMessage } from '../types';
 
-export interface UseWebSocketOptions {
+// Export message types for consumers
+export type { ServerWSMessage, ClientWSMessage };
+
+export interface UseWebSocketOptions<T extends ServerWSMessage = ServerWSMessage> {
   sessionCode: string;
-  onMessage?: (data: WebSocketMessage) => void;
+  onMessage?: (data: T) => void;
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (error: Event) => void;
@@ -21,7 +24,7 @@ export interface UseWebSocketOptions {
   wsUrl?: string;
 }
 
-export function useWebSocket(options: UseWebSocketOptions) {
+export function useWebSocket<T extends ServerWSMessage = ServerWSMessage>(options: UseWebSocketOptions<T>) {
   const {
     sessionCode,
     onMessage,
@@ -36,7 +39,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [lastMessage, setLastMessage] = useState<T | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -99,9 +102,9 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
           // Only update if data changed to prevent unnecessary re-renders
           setLastMessage((prev) =>
-            JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
+            JSON.stringify(prev) !== JSON.stringify(data) ? data as T : prev
           );
-          onMessageRef.current?.(data);
+          onMessageRef.current?.(data as T);
         } catch (error) {
           if (import.meta.env.DEV) {
             console.warn('Failed to parse WebSocket message:', error);
@@ -141,7 +144,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
   }, [sessionCode, enabled, reconnect, reconnectInterval, maxReconnectAttempts, reconnectAttempts, wsUrl]);
 
   const send = useCallback(
-    (data: WebSocketMessage) => {
+    (data: ClientWSMessage | WebSocketMessage) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify(data));
       } else {
