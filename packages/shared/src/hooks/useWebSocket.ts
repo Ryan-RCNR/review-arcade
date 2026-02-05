@@ -43,6 +43,16 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
+  // Store callbacks in refs to avoid dependency array issues
+  const onMessageRef = useRef(onMessage);
+  const onOpenRef = useRef(onOpen);
+  const onCloseRef = useRef(onClose);
+  const onErrorRef = useRef(onError);
+  onMessageRef.current = onMessage;
+  onOpenRef.current = onOpen;
+  onCloseRef.current = onClose;
+  onErrorRef.current = onError;
+
   const connect = useCallback(() => {
     if (!enabled || !sessionCode) return;
 
@@ -70,7 +80,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
         setIsConnected(true);
         setReconnectAttempts(0);
-        if (onOpen) onOpen();
+        onOpenRef.current?.();
       };
 
       ws.onmessage = (event) => {
@@ -82,7 +92,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
           setLastMessage((prev) =>
             JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
           );
-          if (onMessage) onMessage(data);
+          onMessageRef.current?.(data);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
         }
@@ -93,7 +103,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         if (!mountedRef.current) return;
 
         setIsConnected(false);
-        if (onClose) onClose();
+        onCloseRef.current?.();
 
         // Reconnect if enabled and not exceeded max attempts
         if (reconnect && reconnectAttempts < maxReconnectAttempts) {
@@ -110,14 +120,14 @@ export function useWebSocket(options: UseWebSocketOptions) {
         console.error('WebSocket error:', error);
         if (!mountedRef.current) return;
 
-        if (onError) onError(error);
+        onErrorRef.current?.(error);
       };
 
       wsRef.current = ws;
     } catch (error) {
       console.error('Failed to create WebSocket:', error);
     }
-  }, [sessionCode, enabled, reconnect, reconnectInterval, maxReconnectAttempts, reconnectAttempts, wsUrl, onOpen, onClose, onError, onMessage]);
+  }, [sessionCode, enabled, reconnect, reconnectInterval, maxReconnectAttempts, reconnectAttempts, wsUrl]);
 
   const send = useCallback(
     (data: WebSocketMessage) => {
