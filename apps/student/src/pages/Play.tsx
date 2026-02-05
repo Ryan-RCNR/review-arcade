@@ -32,7 +32,8 @@ export default function Play() {
       if (data.type === 'session_ended') {
         navigate(`/results/${code}`)
       } else if (data.type === 'leaderboard_update') {
-        setLeaderboard(data.leaderboard || [])
+        const leaderboardData = data.leaderboard as LeaderboardEntry[] | undefined
+        setLeaderboard(leaderboardData || [])
       }
     },
   })
