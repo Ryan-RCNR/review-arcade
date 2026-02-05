@@ -36,9 +36,10 @@ async function apiFetch<T>(
   };
 
   // Add auth token if available (teacher routes)
-  const token = typeof sessionStorage !== 'undefined'
-    ? sessionStorage.getItem('clerk_token')
-    : null;
+  // Use secure in-memory token storage instead of sessionStorage
+  // Note: Token must be set via storeClerkToken() after Clerk auth
+  const { getClerkToken } = await import('./secureSession');
+  const token = getClerkToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
