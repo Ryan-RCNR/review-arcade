@@ -23,6 +23,8 @@ export default function Monitor() {
   const [players, setPlayers] = useState<Player[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<'start' | 'end' | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -49,20 +51,31 @@ export default function Monitor() {
 
   const handleStart = async () => {
     if (!session) return
+    setActionError(null)
+    setActionLoading('start')
     try {
       await sessionAPI.start(session.id)
+      // Optimistically update session status
+      setSession({ ...session, status: 'active' })
     } catch (err) {
       console.error('Failed to start session:', err)
+      setActionError(err instanceof Error ? err.message : 'Failed to start session')
+    } finally {
+      setActionLoading(null)
     }
   }
 
   const handleEnd = async () => {
     if (!session || !confirm('End this session?')) return
+    setActionError(null)
+    setActionLoading('end')
     try {
       await sessionAPI.end(session.id)
       navigate(`/results/${session.id}`)
     } catch (err) {
       console.error('Failed to end session:', err)
+      setActionError(err instanceof Error ? err.message : 'Failed to end session')
+      setActionLoading(null)
     }
   }
 
@@ -107,17 +120,27 @@ export default function Monitor() {
                   {session.status}
                 </span>
               </div>
+              {actionError && (
+                <div className="bg-red-600/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-400">
+                  {actionError}
+                </div>
+              )}
               {session.status === 'lobby' && (
-                <button onClick={handleStart} className="btn-primary w-full">
-                  Start Session
+                <button
+                  onClick={handleStart}
+                  disabled={actionLoading === 'start'}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {actionLoading === 'start' ? 'Starting...' : 'Start Session'}
                 </button>
               )}
               {session.status === 'active' && (
                 <button
                   onClick={handleEnd}
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg w-full"
+                  disabled={actionLoading === 'end'}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  End Session
+                  {actionLoading === 'end' ? 'Ending...' : 'End Session'}
                 </button>
               )}
               <button
