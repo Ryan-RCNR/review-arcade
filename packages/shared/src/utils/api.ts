@@ -57,7 +57,11 @@ async function apiFetch<T>(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+      // Try to parse JSON error, fallback to text, then generic message
+      const error = await response.json().catch(async () => {
+        const text = await response.text().catch(() => '');
+        return { detail: text || `Request failed with HTTP ${response.status}` };
+      });
       throw new Error(error.detail || `HTTP ${response.status}`);
     }
 
