@@ -36,8 +36,9 @@ export default function Lobby() {
         if (sessionData.status === 'active') {
           navigate(`/play/${code}`)
         }
-      } catch {
-        setError('Failed to load session. Please try again.')
+      } catch (err) {
+        console.error('Lobby load failed:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load session. Please try again.')
         setLoading(false)
       }
     }
