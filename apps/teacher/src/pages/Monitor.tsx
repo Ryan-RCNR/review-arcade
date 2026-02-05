@@ -19,7 +19,7 @@ import {
 } from '@review-arcade/shared'
 
 export default function Monitor() {
-  const { id } = useParams<{ id: string }>()
+  const { id: sessionCode } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
@@ -29,11 +29,11 @@ export default function Monitor() {
   const [actionLoading, setActionLoading] = useState<'start' | 'end' | null>(null)
 
   useEffect(() => {
-    if (!id) return
+    if (!sessionCode) return
 
     const fetchData = async () => {
       try {
-        const sessionData = await sessionAPI.getByCode(id)
+        const sessionData = await sessionAPI.getByCode(sessionCode)
         const playersData = await playerAPI.list(sessionData.code)
         const leaderboardData = await scoreAPI.getLeaderboard(sessionData.code, DEFAULT_LEADERBOARD_LIMIT)
 
@@ -49,7 +49,7 @@ export default function Monitor() {
     fetchData()
     const interval = setInterval(fetchData, POLLING_INTERVAL_NORMAL_MS)
     return () => clearInterval(interval)
-  }, [id])
+  }, [sessionCode])
 
   const handleStart = async () => {
     if (!session) return
