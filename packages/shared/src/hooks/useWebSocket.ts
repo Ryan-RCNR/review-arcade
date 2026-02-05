@@ -46,16 +46,26 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const connect = useCallback(() => {
     if (!enabled || !sessionCode) return;
 
-    const baseUrl = wsUrl || import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+    // Use secure WebSocket by default, only fallback to ws:// in development
+    const defaultWsUrl = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      ? `wss://${window.location.host}`
+      : import.meta.env.DEV
+        ? 'ws://localhost:8000'
+        : `wss://${window.location.host}`;
+
+    const baseUrl = wsUrl || import.meta.env.VITE_WS_URL || defaultWsUrl;
     const url = `${baseUrl}/ws/reviewarcade/${sessionCode}`;
 
-    console.log('Connecting to WebSocket:', url);
+    // Only log in development
+    if (import.meta.env.DEV) {
+      console.log('Connecting to WebSocket:', url);
+    }
 
     try {
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        if (import.meta.env.DEV) console.log('WebSocket connected');
         if (!mountedRef.current) return;
 
         setIsConnected(true);
@@ -76,7 +86,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
       };
 
       ws.onclose = () => {
-        console.log('WebSocket disconnected');
+        if (import.meta.env.DEV) console.log('WebSocket disconnected');
         if (!mountedRef.current) return;
 
         setIsConnected(false);
