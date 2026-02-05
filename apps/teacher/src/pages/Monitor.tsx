@@ -11,6 +11,8 @@ import {
   sessionAPI,
   playerAPI,
   scoreAPI,
+  POLLING_INTERVAL_NORMAL_MS,
+  DEFAULT_LEADERBOARD_LIMIT,
   type Session,
   type Player,
   type LeaderboardEntry,
@@ -33,7 +35,7 @@ export default function Monitor() {
       try {
         const sessionData = await sessionAPI.getByCode(id)
         const playersData = await playerAPI.list(sessionData.code)
-        const leaderboardData = await scoreAPI.getLeaderboard(sessionData.code, 10)
+        const leaderboardData = await scoreAPI.getLeaderboard(sessionData.code, DEFAULT_LEADERBOARD_LIMIT)
 
         setSession(sessionData)
         setPlayers(playersData)
@@ -45,7 +47,7 @@ export default function Monitor() {
     }
 
     fetchData()
-    const interval = setInterval(fetchData, 3000)
+    const interval = setInterval(fetchData, POLLING_INTERVAL_NORMAL_MS)
     return () => clearInterval(interval)
   }, [id])
 

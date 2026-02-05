@@ -6,7 +6,13 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sessionAPI, playerAPI, type Session, type Player } from '@review-arcade/shared'
+import {
+  sessionAPI,
+  playerAPI,
+  POLLING_INTERVAL_FAST_MS,
+  type Session,
+  type Player,
+} from '@review-arcade/shared'
 
 export default function Lobby() {
   const { code } = useParams<{ code: string }>()
@@ -44,7 +50,7 @@ export default function Lobby() {
     }
 
     fetchData()
-    const interval = setInterval(fetchData, 2000)
+    const interval = setInterval(fetchData, POLLING_INTERVAL_FAST_MS)
     return () => clearInterval(interval)
   }, [code, navigate])
 

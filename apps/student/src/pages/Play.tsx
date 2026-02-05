@@ -10,6 +10,8 @@ import {
   sessionAPI,
   scoreAPI,
   useWebSocket,
+  POLLING_INTERVAL_SLOW_MS,
+  DEFAULT_LEADERBOARD_LIMIT,
   type Session,
   type LeaderboardEntry,
 } from '@review-arcade/shared'
@@ -45,7 +47,7 @@ export default function Play() {
     const fetchData = async () => {
       try {
         const sessionData = await sessionAPI.getByCode(code)
-        const leaderboardData = await scoreAPI.getLeaderboard(code, 10)
+        const leaderboardData = await scoreAPI.getLeaderboard(code, DEFAULT_LEADERBOARD_LIMIT)
 
         setSession(sessionData)
         setLeaderboard(leaderboardData)
@@ -63,7 +65,7 @@ export default function Play() {
     }
 
     fetchData()
-    const interval = setInterval(fetchData, 5000)
+    const interval = setInterval(fetchData, POLLING_INTERVAL_SLOW_MS)
     return () => clearInterval(interval)
   }, [code, navigate])
 
@@ -156,7 +158,7 @@ export default function Play() {
             <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
               <h3 className="text-lg font-bold mb-4">Leaderboard</h3>
               <div className="space-y-2">
-                {leaderboard.slice(0, 10).map((entry, index) => (
+                {leaderboard.slice(0, DEFAULT_LEADERBOARD_LIMIT).map((entry, index) => (
                   <div
                     key={entry.player_id}
                     className={`flex items-center justify-between p-2 rounded ${
