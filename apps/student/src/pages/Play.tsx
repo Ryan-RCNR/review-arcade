@@ -23,7 +23,7 @@ import {
   ErrorDisplay,
 } from '../components'
 
-export default function Play() {
+export default function Play(): JSX.Element | null {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
@@ -41,7 +41,9 @@ export default function Play() {
     onMessage: (data) => {
       if (data.type === 'session_ended') {
         navigate(`/results/${code}`)
-      } else if (data.type === 'leaderboard_update') {
+        return
+      }
+      if (data.type === 'leaderboard_update') {
         const leaderboardData = data.leaderboard as LeaderboardEntry[] | undefined
         setLeaderboard(leaderboardData || [])
       }
@@ -86,7 +88,7 @@ export default function Play() {
     [leaderboard, playerId]
   )
 
-  const handleRetry = () => {
+  function handleRetry(): void {
     setError(null)
     setLoading(true)
   }
@@ -123,7 +125,7 @@ export default function Play() {
         </div>
       </div>
 
-      {lastMessage && (
+      {import.meta.env.DEV && lastMessage && (
         <div className="fixed bottom-4 right-4 bg-gray-800 p-2 rounded text-xs text-gray-400 max-w-xs">
           Last update: {lastMessage.type}
         </div>
