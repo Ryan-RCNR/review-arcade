@@ -11,32 +11,31 @@ interface LeaderboardSidebarProps {
   currentPlayerId: string | null;
 }
 
-export function LeaderboardSidebar({ entries, currentPlayerId }: LeaderboardSidebarProps) {
-  const getMedal = (index: number) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return null;
-  };
+const MEDALS = ['🥇', '🥈', '🥉'] as const;
 
+function getEntryStyle(isCurrentPlayer: boolean, index: number): string {
+  if (isCurrentPlayer) {
+    return 'bg-primary/20 border border-primary/50';
+  }
+  if (index < 3) {
+    return 'bg-gray-700/50';
+  }
+  return '';
+}
+
+export function LeaderboardSidebar({ entries, currentPlayerId }: LeaderboardSidebarProps): JSX.Element {
   return (
     <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
       <h3 className="text-lg font-bold mb-4">Leaderboard</h3>
       <div className="space-y-2">
         {entries.map((entry, index) => {
           const isCurrentPlayer = entry.player_id === currentPlayerId;
-          const medal = getMedal(index);
+          const medal = index < 3 ? MEDALS[index] : null;
 
           return (
             <div
               key={entry.player_id}
-              className={`flex items-center justify-between p-2 rounded ${
-                isCurrentPlayer
-                  ? 'bg-primary/20 border border-primary/50'
-                  : index < 3
-                  ? 'bg-gray-700/50'
-                  : ''
-              }`}
+              className={`flex items-center justify-between p-2 rounded ${getEntryStyle(isCurrentPlayer, index)}`}
             >
               <div className="flex items-center gap-2">
                 <span className="font-bold w-6 text-center">

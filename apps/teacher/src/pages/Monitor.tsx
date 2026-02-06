@@ -18,7 +18,20 @@ import {
   type LeaderboardEntry,
 } from '@review-arcade/shared'
 
-export default function Monitor() {
+function getLeaderboardEntryStyle(index: number): string {
+  switch (index) {
+    case 0:
+      return 'bg-yellow-600/20 border border-yellow-500/30'
+    case 1:
+      return 'bg-gray-500/20 border border-gray-400/30'
+    case 2:
+      return 'bg-orange-600/20 border border-orange-500/30'
+    default:
+      return 'bg-gray-700'
+  }
+}
+
+export default function Monitor(): JSX.Element {
   const { id: sessionCode } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
@@ -178,15 +191,7 @@ export default function Monitor() {
               {leaderboard.map((entry, index) => (
                 <div
                   key={entry.player_id}
-                  className={`flex items-center justify-between p-3 rounded ${
-                    index === 0
-                      ? 'bg-yellow-600/20 border border-yellow-500/30'
-                      : index === 1
-                      ? 'bg-gray-500/20 border border-gray-400/30'
-                      : index === 2
-                      ? 'bg-orange-600/20 border border-orange-500/30'
-                      : 'bg-gray-700'
-                  }`}
+                  className={`flex items-center justify-between p-3 rounded ${getLeaderboardEntryStyle(index)}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-lg w-6">{entry.rank}</span>

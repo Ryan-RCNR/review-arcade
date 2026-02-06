@@ -10,22 +10,93 @@ import { useNavigate } from 'react-router-dom'
 import { UserButton } from '@clerk/clerk-react'
 import { sessionAPI, type Session } from '@review-arcade/shared'
 
-export default function Dashboard() {
+type FilterType = 'all' | 'active' | 'ended'
+
+const STATUS_COLORS: Record<Session['status'], string> = {
+  active: 'bg-green-100 text-green-800 border-green-300',
+  lobby: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  paused: 'bg-orange-100 text-orange-800 border-orange-300',
+  ended: 'bg-gray-100 text-gray-800 border-gray-300',
+  draft: 'bg-blue-100 text-blue-800 border-blue-300',
+}
+
+interface FilterButtonProps {
+  label: string
+  value: FilterType
+  currentFilter: FilterType
+  onClick: (value: FilterType) => void
+}
+
+function FilterButton({ label, value, currentFilter, onClick }: FilterButtonProps): JSX.Element {
+  const isActive = currentFilter === value
+  const baseClasses = 'px-4 py-2 rounded-lg transition-colors'
+  const activeClasses = 'bg-primary text-gray-900 font-bold'
+  const inactiveClasses = 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+
+  return (
+    <button
+      onClick={() => onClick(value)}
+      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+    >
+      {label}
+    </button>
+  )
+}
+
+interface SessionActionButtonProps {
+  session: Session
+  onNavigate: (path: string) => void
+}
+
+function SessionActionButton({ session, onNavigate }: SessionActionButtonProps): JSX.Element {
+  const isMonitorable = session.status === 'active' || session.status === 'lobby'
+  const isEnded = session.status === 'ended'
+
+  if (isMonitorable) {
+    return (
+      <button
+        onClick={() => onNavigate(`/monitor/${session.id}`)}
+        className="btn-primary flex-1 text-sm py-2"
+      >
+        Monitor
+      </button>
+    )
+  }
+
+  if (isEnded) {
+    return (
+      <button
+        onClick={() => onNavigate(`/results/${session.id}`)}
+        className="btn-secondary flex-1 text-sm py-2"
+      >
+        View Results
+      </button>
+    )
+  }
+
+  return (
+    <button className="btn-secondary flex-1 text-sm py-2">
+      View Details
+    </button>
+  )
+}
+
+export default function Dashboard(): JSX.Element {
   const navigate = useNavigate()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'active' | 'ended'>('all')
+  const [filter, setFilter] = useState<FilterType>('all')
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    async function fetchSessions(): Promise<void> {
       try {
         const sessionsData = await sessionAPI.list(50)
         setSessions(sessionsData)
-        setLoading(false)
       } catch (err) {
         console.error('Failed to load sessions:', err)
         setError(err instanceof Error ? err.message : 'Failed to load sessions')
+      } finally {
         setLoading(false)
       }
     }
@@ -33,27 +104,18 @@ export default function Dashboard() {
     fetchSessions()
   }, [])
 
-  // Filter sessions
   const filteredSessions = sessions.filter((session) => {
-    if (filter === 'active') return session.status === 'active' || session.status === 'lobby'
-    if (filter === 'ended') return session.status === 'ended'
+    if (filter === 'active') {
+      return session.status === 'active' || session.status === 'lobby'
+    }
+    if (filter === 'ended') {
+      return session.status === 'ended'
+    }
     return true
   })
 
-  // Get status badge color
-  const getStatusColor = (status: Session['status']) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-300'
-      case 'lobby':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
-      case 'paused':
-        return 'bg-orange-100 text-orange-800 border-orange-300'
-      case 'ended':
-        return 'bg-gray-100 text-gray-800 border-gray-300'
-      default:
-        return 'bg-blue-100 text-blue-800 border-blue-300'
-    }
+  function getStatusColor(status: Session['status']): string {
+    return STATUS_COLORS[status] || STATUS_COLORS.draft
   }
 
   return (
@@ -75,36 +137,9 @@ export default function Dashboard() {
         {/* Actions Bar */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'all'
-                  ? 'bg-primary text-gray-900 font-bold'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              All Sessions
-            </button>
-            <button
-              onClick={() => setFilter('active')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'active'
-                  ? 'bg-primary text-gray-900 font-bold'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => setFilter('ended')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'ended'
-                  ? 'bg-primary text-gray-900 font-bold'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Ended
-            </button>
+            <FilterButton label="All Sessions" value="all" currentFilter={filter} onClick={setFilter} />
+            <FilterButton label="Active" value="active" currentFilter={filter} onClick={setFilter} />
+            <FilterButton label="Ended" value="ended" currentFilter={filter} onClick={setFilter} />
           </div>
 
           <button
@@ -190,25 +225,7 @@ export default function Dashboard() {
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  {session.status === 'active' || session.status === 'lobby' ? (
-                    <button
-                      onClick={() => navigate(`/monitor/${session.id}`)}
-                      className="btn-primary flex-1 text-sm py-2"
-                    >
-                      Monitor
-                    </button>
-                  ) : session.status === 'ended' ? (
-                    <button
-                      onClick={() => navigate(`/results/${session.id}`)}
-                      className="btn-secondary flex-1 text-sm py-2"
-                    >
-                      View Results
-                    </button>
-                  ) : (
-                    <button className="btn-secondary flex-1 text-sm py-2">
-                      View Details
-                    </button>
-                  )}
+                  <SessionActionButton session={session} onNavigate={navigate} />
                 </div>
               </div>
             ))}

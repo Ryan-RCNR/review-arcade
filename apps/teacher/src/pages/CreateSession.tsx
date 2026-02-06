@@ -9,7 +9,56 @@ import { useNavigate } from 'react-router-dom'
 import { UserButton } from '@clerk/clerk-react'
 import { sessionAPI, AVAILABLE_GAMES, type GameType } from '@review-arcade/shared'
 
-export default function CreateSession() {
+interface RangeSliderProps {
+  id: string
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  minLabel: string
+  maxLabel: string
+  onChange: (value: number) => void
+}
+
+function RangeSlider({
+  id,
+  label,
+  value,
+  min,
+  max,
+  step,
+  minLabel,
+  maxLabel,
+  onChange,
+}: RangeSliderProps): JSX.Element {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        type="range"
+        id={id}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className="w-full"
+      />
+      <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <span>{minLabel}</span>
+        <span>{maxLabel}</span>
+      </div>
+    </div>
+  )
+}
+
+export default function CreateSession(): JSX.Element {
   const navigate = useNavigate()
   const [selectedGames, setSelectedGames] = useState<GameType[]>([])
   const [maxPlayers, setMaxPlayers] = useState(30)
@@ -17,17 +66,21 @@ export default function CreateSession() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const toggleGame = (gameId: GameType) => {
-    if (selectedGames.includes(gameId)) {
+  function toggleGame(gameId: GameType): void {
+    const isSelected = selectedGames.includes(gameId)
+
+    if (isSelected) {
       setSelectedGames(selectedGames.filter((g) => g !== gameId))
-    } else {
-      if (selectedGames.length < 3) {
-        setSelectedGames([...selectedGames, gameId])
-      }
+      return
+    }
+
+    const canAddMore = selectedGames.length < 3
+    if (canAddMore) {
+      setSelectedGames([...selectedGames, gameId])
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     setError('')
 
@@ -44,7 +97,6 @@ export default function CreateSession() {
         max_players: maxPlayers,
         time_limit_minutes: timeLimit,
       })
-
       navigate(`/monitor/${session.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create session')
@@ -122,53 +174,29 @@ export default function CreateSession() {
             </h2>
 
             <div className="space-y-4">
-              {/* Max Players */}
-              <div>
-                <label
-                  htmlFor="maxPlayers"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Maximum Players: {maxPlayers}
-                </label>
-                <input
-                  type="range"
-                  id="maxPlayers"
-                  min="5"
-                  max="100"
-                  step="5"
-                  value={maxPlayers}
-                  onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>5</span>
-                  <span>100</span>
-                </div>
-              </div>
+              <RangeSlider
+                id="maxPlayers"
+                label={`Maximum Players: ${maxPlayers}`}
+                value={maxPlayers}
+                min={5}
+                max={100}
+                step={5}
+                minLabel="5"
+                maxLabel="100"
+                onChange={setMaxPlayers}
+              />
 
-              {/* Time Limit */}
-              <div>
-                <label
-                  htmlFor="timeLimit"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Time Limit: {timeLimit} minutes
-                </label>
-                <input
-                  type="range"
-                  id="timeLimit"
-                  min="5"
-                  max="60"
-                  step="5"
-                  value={timeLimit}
-                  onChange={(e) => setTimeLimit(parseInt(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>5 min</span>
-                  <span>60 min</span>
-                </div>
-              </div>
+              <RangeSlider
+                id="timeLimit"
+                label={`Time Limit: ${timeLimit} minutes`}
+                value={timeLimit}
+                min={5}
+                max={60}
+                step={5}
+                minLabel="5 min"
+                maxLabel="60 min"
+                onChange={setTimeLimit}
+              />
             </div>
           </div>
 
@@ -180,14 +208,11 @@ export default function CreateSession() {
             <div className="space-y-2 text-sm text-blue-800">
               <p>
                 <span className="font-medium">Games:</span>{' '}
-                {selectedGames.length > 0
-                  ? selectedGames
-                      .map(
-                        (id) =>
-                          AVAILABLE_GAMES.find((g) => g.id === id)?.name || id
-                      )
-                      .join(', ')
-                  : 'None selected'}
+                {selectedGames.length === 0
+                  ? 'None selected'
+                  : selectedGames
+                      .map((id) => AVAILABLE_GAMES.find((g) => g.id === id)?.name || id)
+                      .join(', ')}
               </p>
               <p>
                 <span className="font-medium">Max Players:</span> {maxPlayers}

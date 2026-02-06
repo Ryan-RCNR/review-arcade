@@ -4,7 +4,7 @@ import Lobby from './pages/Lobby'
 import Play from './pages/Play'
 import { OfflineBanner } from './components/OfflineBanner'
 
-export default function App() {
+export default function App(): JSX.Element {
   return (
     <BrowserRouter>
       <OfflineBanner />

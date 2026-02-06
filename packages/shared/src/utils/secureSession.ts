@@ -112,11 +112,11 @@ export function getSessionMetadata(): PlayerSessionData | null {
  * Check if has valid session
  */
 export function hasValidSession(): boolean {
-  if (!memorySession) return false;
-  if (memorySession.expiresAt && Date.now() > memorySession.expiresAt) {
+  if (!memorySession) {
     return false;
   }
-  return true;
+  const isExpired = memorySession.expiresAt && Date.now() > memorySession.expiresAt;
+  return !isExpired;
 }
 
 /**

@@ -8,14 +8,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { playerAPI } from '@review-arcade/shared'
 
-export default function Join() {
+export default function Join(): JSX.Element {
   const navigate = useNavigate()
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     setError('')
     setLoading(true)

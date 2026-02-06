@@ -5,7 +5,11 @@ import CreateSession from './pages/CreateSession'
 import Monitor from './pages/Monitor'
 import { useClerkToken } from './hooks'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+interface ProtectedRouteProps {
+  children: React.ReactNode
+}
+
+function ProtectedRoute({ children }: ProtectedRouteProps): JSX.Element {
   // Store Clerk token in memory for API requests
   useClerkToken();
 
@@ -19,7 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function App() {
+export default function App(): JSX.Element {
   return (
     <BrowserRouter>
       <Routes>

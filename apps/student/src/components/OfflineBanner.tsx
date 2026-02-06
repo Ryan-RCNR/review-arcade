@@ -6,12 +6,16 @@
 
 import { useState, useEffect } from 'react'
 
-export function OfflineBanner() {
+export function OfflineBanner(): JSX.Element | null {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
+    function handleOnline(): void {
+      setIsOnline(true)
+    }
+    function handleOffline(): void {
+      setIsOnline(false)
+    }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)

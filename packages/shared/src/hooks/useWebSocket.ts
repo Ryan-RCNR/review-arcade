@@ -59,14 +59,19 @@ export function useWebSocket<T extends ServerWSMessage = ServerWSMessage>(option
   const connect = useCallback(() => {
     if (!enabled || !sessionCode) return;
 
-    // Use secure WebSocket by default, only fallback to ws:// in development
-    const defaultWsUrl = typeof window !== 'undefined' && window.location.protocol === 'https:'
-      ? `wss://${window.location.host}`
-      : import.meta.env.DEV
-        ? 'ws://localhost:8000'
-        : `wss://${window.location.host}`;
+    // Determine WebSocket URL with proper security
+    function getDefaultWsUrl(): string {
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      if (isHttps) {
+        return `wss://${window.location.host}`;
+      }
+      if (import.meta.env.DEV) {
+        return 'ws://localhost:8000';
+      }
+      return `wss://${window.location.host}`;
+    }
 
-    const baseUrl = wsUrl || import.meta.env.VITE_WS_URL || defaultWsUrl;
+    const baseUrl = wsUrl || import.meta.env.VITE_WS_URL || getDefaultWsUrl();
     const url = `${baseUrl}/ws/reviewarcade/${sessionCode}`;
 
     // Only log in development
