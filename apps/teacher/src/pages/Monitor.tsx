@@ -6,7 +6,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { UserButton } from '@clerk/clerk-react'
 import {
   sessionAPI,
   playerAPI,
@@ -107,17 +106,17 @@ export default function Monitor(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+      {/* Page sub-header */}
+      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Session Monitor</h1>
+            <h2 className="text-2xl font-bold">Session Monitor</h2>
             <p className="text-gray-400">
               Code: <span className="font-mono text-primary">{session.code}</span>
             </p>
           </div>
-          <UserButton afterSignOutUrl="/" />
         </div>
-      </header>
+      </div>
 
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

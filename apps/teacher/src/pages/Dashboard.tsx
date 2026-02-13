@@ -7,7 +7,6 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserButton } from '@clerk/clerk-react'
 import { sessionAPI, type Session } from '@review-arcade/shared'
 
 type FilterType = 'all' | 'active' | 'ended'
@@ -120,19 +119,6 @@ export default function Dashboard(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Review Arcade
-            </h1>
-            <p className="text-sm text-gray-600">Teacher Dashboard</p>
-          </div>
-          <UserButton afterSignOutUrl="/" />
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Actions Bar */}
         <div className="flex justify-between items-center mb-6">

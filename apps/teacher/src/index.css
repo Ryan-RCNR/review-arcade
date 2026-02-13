@@ -4,6 +4,9 @@
   --color-primary: #FFE066;
   --color-primary-light: #FFF3B8;
   --color-primary-dark: #E6C200;
+  --color-brand: #99d9d9;
+  --color-surface: #001628;
+  --color-midnight: #000C17;
 }
 
 :root {
@@ -29,4 +32,16 @@ body {
 
 .card {
   @apply bg-white rounded-xl shadow-md p-6;
+}
+
+/* RCNR nav bar glass style (dark bar on light pages) */
+.glass-nav {
+  background: rgba(0, 22, 40, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(153, 217, 217, 0.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

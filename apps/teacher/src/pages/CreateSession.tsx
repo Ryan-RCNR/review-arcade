@@ -6,7 +6,6 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserButton } from '@clerk/clerk-react'
 import { sessionAPI, AVAILABLE_GAMES, type GameType } from '@review-arcade/shared'
 
 interface RangeSliderProps {
@@ -106,28 +105,22 @@ export default function CreateSession(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Page title */}
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               Create New Session
-            </h1>
+            </h2>
             <p className="text-sm text-gray-600">Configure your game session</p>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              ← Back to Dashboard
-            </button>
-            <UserButton afterSignOutUrl="/" />
-          </div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            &larr; Back to Dashboard
+          </button>
         </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit}>
           {/* Error Message */}
           {error && (
