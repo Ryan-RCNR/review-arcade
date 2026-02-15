@@ -18,22 +18,14 @@ function RCNRLogo(): React.JSX.Element {
       title="Back to Dashboard"
     >
       <svg
-        width="24"
+        width="28"
         height="24"
-        viewBox="0 0 100 100"
+        viewBox="0 0 120 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path
-          d="M50 15L85 75H15L50 15Z"
-          fill="currentColor"
-          className="text-brand"
-        />
-        <path
-          d="M50 35L70 65H30L50 35Z"
-          fill="currentColor"
-          className="text-surface"
-        />
+        <path d="M10,90l26.48-39.76h.31s4.54,5.02,4.54,5.02l.32-.16,23.06-37.14,17.34,28.63,3.65-4.61,30.22,48.03h-8.43c-7.17-12.26-15.51-24.35-23.06-36.26-1.43.52-2.03,3.6-3.49,3.97l-16.31-25.93-21.87,34.36-5.09-5.01-19.48,28.87h-8.19Z" fill="#fff" />
+        <path d="M89.84,90h-5.73c-6.34-8.18-12.93-16.89-19.64-24.65-6.66,8.19-13.04,16.6-19.89,24.65h-5.81l25.69-39.76,25.37,39.76Z" fill="#fff" />
       </svg>
     </a>
   )
