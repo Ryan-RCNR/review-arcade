@@ -123,7 +123,7 @@ const HOW_IT_WORKS_SECTIONS = [
 function Layout({ children, onHowItWorks }: { children: React.ReactNode; onHowItWorks: () => void }): React.JSX.Element {
   return (
     <div className="min-h-screen">
-      <header className="glass-nav border-b border-brand/15 px-6 py-4">
+      <header className="glass-card border-b border-brand/15 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <RCNRLogo />
