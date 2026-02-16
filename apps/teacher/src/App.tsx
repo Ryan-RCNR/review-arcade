@@ -13,7 +13,7 @@ import type { ReactNode } from 'react'
 function RCNRLogo(): React.JSX.Element {
   return (
     <a
-      href="https://rcnr.net/dashboard"
+      href="https://teacher.rcnr.net"
       className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand/10 hover:bg-brand/20 transition-colors"
       title="Back to Dashboard"
     >

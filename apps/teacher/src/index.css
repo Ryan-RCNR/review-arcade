@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #FFE066;
-  --color-primary-light: #FFF3B8;
-  --color-primary-dark: #E6C200;
+  --color-primary: #F5A623;
+  --color-primary-light: #FFB84D;
+  --color-primary-dark: #D48E1A;
   --color-brand: #99d9d9;
   --color-surface: #001628;
   --color-midnight: #000C17;
@@ -23,7 +23,34 @@ body {
 
 /* Base button styles */
 .btn-primary {
-  @apply bg-primary text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors;
+  @apply bg-primary text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-primary-light transition-colors;
+}
+
+/* Amber CTA button */
+.btn-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #F5A623;
+  border: none;
+  border-radius: 8px;
+  color: #000C17;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-amber:hover {
+  background: #FFB84D;
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.3);
+}
+
+.btn-amber:disabled {
+  background: #5F6368;
+  color: #9AA0A6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
