@@ -19,6 +19,30 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--color-surface);
+  color: #FAFAFA;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle grid background -- matches rcnr.net */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(153, 217, 217, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153, 217, 217, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
 }
 
 /* Base button styles */
@@ -54,14 +78,38 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors;
+  background: transparent;
+  border: 1px solid rgba(153, 217, 217, 0.2);
+  color: #9AA0A6;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #68A2B9;
+  color: #99d9d9;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-md p-6;
+  background: rgba(0, 22, 40, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(153, 217, 217, 0.15);
+  border-radius: 12px;
+  padding: 1.5rem;
 }
 
-/* RCNR nav bar glass style (dark bar on light pages) */
+.glass-card {
+  background: rgba(0, 22, 40, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(153, 217, 217, 0.15);
+}
+
+/* RCNR nav bar glass style */
 .glass-nav {
   background: rgba(0, 22, 40, 0.95);
   backdrop-filter: blur(10px);
@@ -72,3 +120,9 @@ body {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0, 22, 40, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(153, 217, 217, 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(153, 217, 217, 0.5); }
