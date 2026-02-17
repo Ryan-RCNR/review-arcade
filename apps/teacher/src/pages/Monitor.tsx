@@ -95,7 +95,7 @@ export default function Monitor(): JSX.Element {
 
   if (loading || !session) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-white text-center" role="status" aria-live="polite">
           <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
           <p className="text-lg">Loading...</p>
@@ -105,7 +105,7 @@ export default function Monitor(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       {/* Page sub-header */}
       <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div className="flex justify-between items-center">

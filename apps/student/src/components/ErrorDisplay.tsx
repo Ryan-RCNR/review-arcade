@@ -11,7 +11,7 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ message, onRetry }: ErrorDisplayProps) {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="text-white text-center" role="alert" aria-live="assertive">
         <div className="text-6xl mb-4" aria-hidden="true">❌</div>
         <p className="text-lg text-red-400 mb-4">{message}</p>

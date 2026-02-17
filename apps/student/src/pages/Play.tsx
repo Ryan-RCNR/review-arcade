@@ -102,7 +102,7 @@ export default function Play(): JSX.Element | null {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <PlayHeader
         sessionCode={code || ''}
         playerName={playerName}
