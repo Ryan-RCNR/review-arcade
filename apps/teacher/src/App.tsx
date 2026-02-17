@@ -70,8 +70,8 @@ function NavActions({ onHowItWorks }: { onHowItWorks?: () => void }): React.JSX.
       )}
       <NavButton
         onClick={handleReport}
-        title="Report a bug"
-        label="Report Bug"
+        title="Report an issue"
+        label="Report Issue"
         icon={<AlertCircle size={18} />}
       />
       <NavButton
