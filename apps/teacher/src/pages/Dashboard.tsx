@@ -66,7 +66,7 @@ function SessionActionButton({ session, onNavigate }: SessionActionButtonProps):
     return (
       <button
         onClick={() => onNavigate(`/results/${session.id}`)}
-        className="btn-secondary flex-1 text-sm py-2"
+        className="btn-ghost flex-1 text-sm py-2"
       >
         View Results
       </button>
@@ -74,7 +74,7 @@ function SessionActionButton({ session, onNavigate }: SessionActionButtonProps):
   }
 
   return (
-    <button className="btn-secondary flex-1 text-sm py-2">
+    <button className="btn-ghost flex-1 text-sm py-2">
       View Details
     </button>
   )

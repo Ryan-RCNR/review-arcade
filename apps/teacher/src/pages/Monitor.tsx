@@ -159,7 +159,7 @@ export default function Monitor(): JSX.Element {
               )}
               <button
                 onClick={() => navigate('/dashboard')}
-                className="btn-secondary w-full"
+                className="btn-ghost w-full"
               >
                 Back to Dashboard
               </button>

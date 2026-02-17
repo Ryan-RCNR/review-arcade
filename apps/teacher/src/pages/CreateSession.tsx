@@ -222,7 +222,7 @@ export default function CreateSession(): JSX.Element {
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="btn-secondary flex-1"
+              className="btn-ghost flex-1"
             >
               Cancel
             </button>

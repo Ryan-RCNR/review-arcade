@@ -7,25 +7,9 @@
   --color-primary-dark: #D48E1A;
 }
 
-/* Base button styles */
+/* Orange primary button — tool-specific override */
 .btn-primary {
   @apply bg-primary text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-primary-light transition-colors;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid rgba(153, 217, 217, 0.2);
-  color: #9AA0A6;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  border-color: #68A2B9;
-  color: #99d9d9;
 }
 
 .card {
