@@ -126,7 +126,7 @@ export default function Play(): JSX.Element | null {
       </div>
 
       {import.meta.env.DEV && lastMessage && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 p-2 rounded text-xs text-gray-400 max-w-xs">
+        <div className="fixed bottom-4 right-4 bg-[#0A1E2E] p-2 rounded text-xs text-gray-400 max-w-xs">
           Last update: {lastMessage.type}
         </div>
       )}

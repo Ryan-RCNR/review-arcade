@@ -13,7 +13,7 @@ interface PlayHeaderProps {
 
 export function PlayHeader({ sessionCode, playerName, playerScore, isConnected }: PlayHeaderProps) {
   return (
-    <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
+    <header className="bg-[#0A1E2E] border-b border-gray-700 px-4 py-3">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">Review Arcade</h1>

@@ -26,7 +26,7 @@ function getLeaderboardEntryStyle(index: number): string {
     case 2:
       return 'bg-orange-600/20 border border-orange-500/30'
     default:
-      return 'bg-gray-700'
+      return 'bg-[#0F2A3D]'
   }
 }
 
@@ -107,7 +107,7 @@ export default function Monitor(): JSX.Element {
   return (
     <div className="min-h-screen text-white">
       {/* Page sub-header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+      <div className="bg-[#0A1E2E] border-b border-gray-700 px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold">Session Monitor</h2>
@@ -121,7 +121,7 @@ export default function Monitor(): JSX.Element {
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Controls */}
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-bold mb-4">Controls</h2>
             <div className="space-y-3">
               <div className="text-sm text-gray-400 mb-4">
@@ -167,11 +167,11 @@ export default function Monitor(): JSX.Element {
           </div>
 
           {/* Players */}
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-bold mb-4">Players ({players.length})</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {players.map((player) => (
-                <div key={player.id} className="bg-gray-700 rounded p-3">
+                <div key={player.id} className="bg-[#0F2A3D] rounded p-3">
                   <p className="font-medium">{player.name}</p>
                 </div>
               ))}
@@ -184,7 +184,7 @@ export default function Monitor(): JSX.Element {
           </div>
 
           {/* Leaderboard */}
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-bold mb-4">Leaderboard</h2>
             <div className="space-y-2">
               {leaderboard.map((entry, index) => (

@@ -18,14 +18,14 @@ function getEntryStyle(isCurrentPlayer: boolean, index: number): string {
     return 'bg-primary/20 border border-primary/50';
   }
   if (index < 3) {
-    return 'bg-gray-700/50';
+    return 'bg-[#0F2A3D]';
   }
   return '';
 }
 
 export function LeaderboardSidebar({ entries, currentPlayerId }: LeaderboardSidebarProps): JSX.Element {
   return (
-    <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+    <div className="bg-[#0A1E2E] rounded-xl p-4 border border-gray-700">
       <h3 className="text-lg font-bold mb-4">Leaderboard</h3>
       <div className="space-y-2">
         {entries.map((entry, index) => {

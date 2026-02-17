@@ -14,7 +14,7 @@ function formatGameName(game: string): string {
 
 export function GameArea({ games }: GameAreaProps): JSX.Element {
   return (
-    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 min-h-[500px] flex items-center justify-center">
+    <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700 min-h-[500px] flex items-center justify-center">
       <div className="text-center">
         <div className="text-6xl mb-4">🎮</div>
         <h2 className="text-2xl font-bold mb-2">Game Area</h2>
@@ -25,7 +25,7 @@ export function GameArea({ games }: GameAreaProps): JSX.Element {
           {games.map((game) => (
             <span
               key={game}
-              className="bg-gray-700 px-4 py-2 rounded-lg text-sm"
+              className="bg-[#0F2A3D] px-4 py-2 rounded-lg text-sm"
             >
               {formatGameName(game)}
             </span>

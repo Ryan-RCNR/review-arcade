@@ -91,7 +91,7 @@ export function HowItWorksOverlay({
               />
             </div>
           ) : (
-            <div className="rounded-xl bg-white/5 border border-brand/10 flex flex-col items-center justify-center py-10 gap-3">
+            <div className="rounded-xl bg-[#0A1E2E] border border-brand/10 flex flex-col items-center justify-center py-10 gap-3">
               <Film size={32} className="text-brand/30" />
               <p className="text-brand/30 text-sm">Video walkthrough coming soon</p>
             </div>

@@ -20,8 +20,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    linear-gradient(rgba(153, 217, 217, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(153, 217, 217, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(153, 217, 217, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153, 217, 217, 0.05) 1px, transparent 1px),
     var(--color-surface);
   background-size: 60px 60px, 60px 60px, auto;
   background-attachment: fixed;
@@ -82,18 +82,14 @@ body {
 }
 
 .card {
-  background: rgba(0, 22, 40, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #0A1E2E;
   border: 1px solid rgba(153, 217, 217, 0.15);
   border-radius: 12px;
   padding: 1.5rem;
 }
 
 .glass-card {
-  background: rgba(0, 22, 40, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #0A1E2E;
   border: 1px solid rgba(153, 217, 217, 0.15);
 }
 
