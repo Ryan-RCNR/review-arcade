@@ -30,7 +30,7 @@ function getLeaderboardEntryStyle(index: number): string {
   }
 }
 
-export default function Monitor(): JSX.Element {
+export default function Monitor(): React.JSX.Element {
   const { id: sessionCode } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)

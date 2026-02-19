@@ -12,7 +12,7 @@ function formatGameName(game: string): string {
   return game.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-export function GameArea({ games }: GameAreaProps): JSX.Element {
+export function GameArea({ games }: GameAreaProps) {
   return (
     <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700 min-h-[500px] flex items-center justify-center">
       <div className="text-center">

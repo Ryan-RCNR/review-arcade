@@ -26,7 +26,7 @@ interface FilterButtonProps {
   onClick: (value: FilterType) => void
 }
 
-function FilterButton({ label, value, currentFilter, onClick }: FilterButtonProps): JSX.Element {
+function FilterButton({ label, value, currentFilter, onClick }: FilterButtonProps): React.JSX.Element {
   const isActive = currentFilter === value
   const baseClasses = 'px-4 py-2 rounded-lg transition-colors'
   const activeClasses = 'bg-primary text-gray-900 font-bold'
@@ -47,7 +47,7 @@ interface SessionActionButtonProps {
   onNavigate: (path: string) => void
 }
 
-function SessionActionButton({ session, onNavigate }: SessionActionButtonProps): JSX.Element {
+function SessionActionButton({ session, onNavigate }: SessionActionButtonProps): React.JSX.Element {
   const isMonitorable = session.status === 'active' || session.status === 'lobby'
   const isEnded = session.status === 'ended'
 
@@ -80,7 +80,7 @@ function SessionActionButton({ session, onNavigate }: SessionActionButtonProps):
   )
 }
 
-export default function Dashboard(): JSX.Element {
+export default function Dashboard(): React.JSX.Element {
   const navigate = useNavigate()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)

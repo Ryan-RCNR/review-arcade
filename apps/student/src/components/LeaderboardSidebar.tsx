@@ -23,7 +23,7 @@ function getEntryStyle(isCurrentPlayer: boolean, index: number): string {
   return '';
 }
 
-export function LeaderboardSidebar({ entries, currentPlayerId }: LeaderboardSidebarProps): JSX.Element {
+export function LeaderboardSidebar({ entries, currentPlayerId }: LeaderboardSidebarProps) {
   return (
     <div className="bg-[#0A1E2E] rounded-xl p-4 border border-gray-700">
       <h3 className="text-lg font-bold mb-4">Leaderboard</h3>

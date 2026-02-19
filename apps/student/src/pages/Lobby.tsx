@@ -14,7 +14,7 @@ import {
   type Player,
 } from '@review-arcade/shared'
 
-export default function Lobby(): JSX.Element {
+export default function Lobby() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)

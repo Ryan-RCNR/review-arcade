@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 
-export function OfflineBanner(): JSX.Element | null {
+export function OfflineBanner() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   useEffect(() => {

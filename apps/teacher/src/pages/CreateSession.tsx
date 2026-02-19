@@ -30,7 +30,7 @@ function RangeSlider({
   minLabel,
   maxLabel,
   onChange,
-}: RangeSliderProps): JSX.Element {
+}: RangeSliderProps): React.JSX.Element {
   return (
     <div>
       <label
@@ -57,7 +57,7 @@ function RangeSlider({
   )
 }
 
-export default function CreateSession(): JSX.Element {
+export default function CreateSession(): React.JSX.Element {
   const navigate = useNavigate()
   const [selectedGames, setSelectedGames] = useState<GameType[]>([])
   const [maxPlayers, setMaxPlayers] = useState(30)

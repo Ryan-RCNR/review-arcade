@@ -23,7 +23,7 @@ import {
   ErrorDisplay,
 } from '../components'
 
-export default function Play(): JSX.Element | null {
+export default function Play() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)

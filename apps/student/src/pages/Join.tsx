@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { playerAPI } from '@review-arcade/shared'
 
-export default function Join(): JSX.Element {
+export default function Join() {
   const navigate = useNavigate()
   const [code, setCode] = useState('')
   const [name, setName] = useState('')

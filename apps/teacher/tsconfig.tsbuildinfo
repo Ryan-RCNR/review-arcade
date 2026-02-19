@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/instrument.ts","./src/main.tsx","./src/vite-env.d.ts","./src/components/howitworksoverlay.tsx","./src/hooks/index.ts","./src/hooks/useclerktoken.ts","./src/pages/createsession.tsx","./src/pages/dashboard.tsx","./src/pages/monitor.tsx"],"version":"5.9.3"}
