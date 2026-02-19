@@ -51,11 +51,11 @@ function NavButton({ onClick, icon, label, title }: {
 
 function NavActions({ onHowItWorks }: { onHowItWorks?: () => void }): React.JSX.Element {
   const handleReport = () => {
-    window.open('https://rcnr.net/dashboard?report=true&tool=reviewarcade', '_blank')
+    window.open('https://teacher.rcnr.net?report=true&tool=reviewarcade', '_blank')
   }
 
   const handleRequest = () => {
-    window.open('https://rcnr.net/dashboard?request=true', '_blank')
+    window.open('https://teacher.rcnr.net?request=true', '_blank')
   }
 
   return (
