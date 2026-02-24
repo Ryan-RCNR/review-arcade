@@ -1,28 +1,26 @@
 /**
  * Review Arcade API Client
  *
- * Shared API client for backend communication
+ * Updated for new backend (2026-02-24):
+ * - SessionCreate sends game_type + teacher_mode (not config.games array)
+ * - Join returns player_token for WS auth
+ * - Session preview for student join screen
+ * - Teacher join-as-player endpoint
+ * - Post-game results endpoint
  */
 
 import type {
   Session,
-  SessionConfig,
+  SessionCreate,
+  SessionPreview,
   Player,
-  Question,
-  AnswerResponse,
-  LeaderboardEntry,
-  PlayerStats,
-  ScoreResponse,
 } from '../types';
 
-// Get API URL - apps will provide this via env
 const getApiUrl = () =>
   import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Default request timeout in milliseconds
 const DEFAULT_TIMEOUT_MS = 10000;
 
-// Generic fetch wrapper
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit & { timeout?: number } = {}
@@ -35,16 +33,12 @@ async function apiFetch<T>(
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
-  // Add auth token if available (teacher routes)
-  // Use secure in-memory token storage instead of sessionStorage
-  // Note: Token must be set via storeClerkToken() after Clerk auth
   const { getClerkToken } = await import('./secureSession');
   const token = getClerkToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Set up timeout with AbortController
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -58,7 +52,6 @@ async function apiFetch<T>(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      // Try to parse JSON error, fallback to text, then generic message
       const error = await response.json().catch(async () => {
         const text = await response.text().catch(() => '');
         return { detail: text || `Request failed with HTTP ${response.status}` };
@@ -77,56 +70,38 @@ async function apiFetch<T>(
 }
 
 // ========================================
-// Session API
+// Session API (teacher, requires Clerk auth)
 // ========================================
 
 export const sessionAPI = {
-  // Create new session (teacher only, requires Clerk auth)
-  create: async (config: SessionConfig): Promise<Session> => {
+  create: async (data: SessionCreate): Promise<Session> => {
     return apiFetch('/api/reviewarcade/sessions', {
       method: 'POST',
-      body: JSON.stringify({ config }),
+      body: JSON.stringify(data),
     });
   },
 
-  // Get session by code (public)
-  getByCode: async (code: string): Promise<Session> => {
+  list: async (limit: number = 20): Promise<Session[]> => {
+    return apiFetch(`/api/reviewarcade/sessions?limit=${limit}`);
+  },
+
+  /** Public -- students check session before joining */
+  getByCode: async (code: string): Promise<SessionPreview> => {
     return apiFetch(`/api/reviewarcade/sessions/${code}`);
   },
 
-  // Start session (teacher only)
-  start: async (sessionId: string): Promise<Session> => {
-    return apiFetch(`/api/reviewarcade/sessions/${sessionId}/start`, {
-      method: 'POST',
-    });
-  },
-
-  // Pause session (teacher only)
-  pause: async (sessionId: string): Promise<Session> => {
-    return apiFetch(`/api/reviewarcade/sessions/${sessionId}/pause`, {
-      method: 'POST',
-    });
-  },
-
-  // End session (teacher only)
-  end: async (sessionId: string): Promise<Session> => {
-    return apiFetch(`/api/reviewarcade/sessions/${sessionId}/end`, {
-      method: 'POST',
-    });
-  },
-
-  // List sessions (teacher only)
-  list: async (limit: number = 20): Promise<Session[]> => {
-    return apiFetch(`/api/reviewarcade/sessions?limit=${limit}`);
+  /** Get post-game results (teacher only) */
+  getResults: async (sessionId: string): Promise<Record<string, unknown>> => {
+    return apiFetch(`/api/reviewarcade/sessions/${sessionId}/results`);
   },
 };
 
 // ========================================
-// Player API
+// Player API (public, no auth)
 // ========================================
 
 export const playerAPI = {
-  // Join session (student, no auth)
+  /** Student joins session. Returns player with player_token for WS auth. */
   join: async (code: string, name: string): Promise<Player> => {
     return apiFetch(`/api/reviewarcade/sessions/${code}/join`, {
       method: 'POST',
@@ -134,72 +109,10 @@ export const playerAPI = {
     });
   },
 
-  // List players in session (public)
-  list: async (code: string): Promise<Player[]> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/players`);
-  },
-
-  // Get player details (public)
-  get: async (playerId: string): Promise<Player> => {
-    return apiFetch(`/api/reviewarcade/sessions/player/${playerId}`);
-  },
-};
-
-// ========================================
-// Question API
-// ========================================
-
-export const questionAPI = {
-  // Get next question (student)
-  getNext: async (code: string, playerId: string): Promise<Question> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/question?player_id=${playerId}`);
-  },
-
-  // Submit answer (student)
-  submitAnswer: async (
-    code: string,
-    data: {
-      player_id: string;
-      question_id: string;
-      answer: string;
-      time_to_answer_ms?: number;
-    }
-  ): Promise<AnswerResponse> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/answer`, {
+  /** Teacher joins own session as player (Play Mode). Requires Clerk auth. */
+  joinAsTeacher: async (code: string): Promise<Player> => {
+    return apiFetch(`/api/reviewarcade/sessions/${code}/join-teacher`, {
       method: 'POST',
-      body: JSON.stringify(data),
     });
-  },
-};
-
-// ========================================
-// Score API
-// ========================================
-
-export const scoreAPI = {
-  // Submit game score (student)
-  submit: async (
-    code: string,
-    data: {
-      player_id: string;
-      game_name: string;
-      game_score: number;
-      metadata?: Record<string, unknown>;
-    }
-  ): Promise<ScoreResponse> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/score`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Get leaderboard (public)
-  getLeaderboard: async (code: string, limit: number = 50): Promise<LeaderboardEntry[]> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/leaderboard?limit=${limit}`);
-  },
-
-  // Get player stats (public)
-  getPlayerStats: async (code: string, playerId: string): Promise<PlayerStats> => {
-    return apiFetch(`/api/reviewarcade/sessions/${code}/player/${playerId}/stats`);
   },
 };

@@ -1,96 +1,93 @@
 /**
  * Student Join Page
  *
- * Students enter a 6-character session code and their display name
+ * Students enter a 6-character session code and display name.
+ * On join, receives player_token for WS auth.
  */
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { playerAPI } from '@review-arcade/shared'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { playerAPI, storePlayerSession } from '@review-arcade/shared';
 
 export default function Join() {
-  const navigate = useNavigate()
-  const [code, setCode] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
-      // Validate session code format (alphanumeric, 4-6 characters)
-      const codePattern = /^[A-Z0-9]{4,6}$/
+      const codePattern = /^[A-Z0-9]{4,6}$/;
       if (!code || !codePattern.test(code.toUpperCase())) {
-        setError('Please enter a valid session code (4-6 alphanumeric characters)')
-        setLoading(false)
-        return
+        setError('Please enter a valid session code (4-6 alphanumeric characters)');
+        setLoading(false);
+        return;
       }
 
-      if (!name || name.length < 2) {
-        setError('Please enter a name (at least 2 characters)')
-        setLoading(false)
-        return
+      if (!name || name.trim().length < 2) {
+        setError('Please enter a name (at least 2 characters)');
+        setLoading(false);
+        return;
       }
 
-      // Join session
-      const player = await playerAPI.join(code.toUpperCase(), name)
+      const player = await playerAPI.join(code.toUpperCase(), name.trim());
 
-      // Store player info in sessionStorage
-      sessionStorage.setItem('player_id', player.id)
-      sessionStorage.setItem('player_name', player.name)
-      sessionStorage.setItem('session_code', code.toUpperCase())
+      // Store player session with token in memory (XSS-resistant)
+      storePlayerSession({
+        playerId: player.id,
+        playerName: player.name,
+        sessionCode: player.session_code,
+        playerToken: player.player_token,
+      });
 
-      // Navigate to lobby
-      navigate(`/lobby/${code.toUpperCase()}`)
+      navigate(`/lobby/${player.session_code}`);
     } catch (err) {
       if (err instanceof Error) {
-        if (err.message.includes('404')) {
-          setError('Session not found. Check your code and try again.')
+        if (err.message.includes('not found') || err.message.includes('404')) {
+          setError('Session not found. Check your code and try again.');
+        } else if (err.message.includes('full')) {
+          setError('Session is full. Try again later.');
+        } else if (err.message.includes('not accepting')) {
+          setError('Session is no longer accepting players.');
         } else {
-          setError(err.message || 'Failed to join session. Please try again.')
+          setError(err.message || 'Failed to join session. Please try again.');
         }
       } else {
-        setError('Failed to join session. Please try again.')
+        setError('Failed to join session. Please try again.');
       }
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary flex items-center justify-center p-4">
-      <div className="card max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-midnight flex items-center justify-center p-4">
+      <div className="glass-card max-w-md w-full p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">
             Join Game
           </h1>
-          <p className="text-gray-600">
-            Enter your session code and name to get started
+          <p className="text-brand/50">
+            Enter the code from your teacher's screen
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div
             role="alert"
-            aria-live="polite"
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+            className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm"
           >
             {error}
           </div>
         )}
 
-        {/* Join Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Session Code Input */}
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label
-              htmlFor="code"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="code" className="block text-sm font-medium text-brand/70 mb-1.5">
               Session Code
             </label>
             <input
@@ -100,21 +97,14 @@ export default function Join() {
               onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
               placeholder="ABC123"
               maxLength={6}
-              className="w-full px-4 py-3 text-center text-2xl font-mono uppercase border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-3 text-center text-2xl font-mono uppercase bg-surface-light border border-brand/15 rounded-xl text-white placeholder-brand/30 focus:outline-none focus:ring-2 focus:ring-brand/40"
               disabled={loading}
               autoFocus
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Enter the code shown on your teacher's screen
-            </p>
           </div>
 
-          {/* Name Input */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="name" className="block text-sm font-medium text-brand/70 mb-1.5">
               Your Name
             </label>
             <input
@@ -124,24 +114,21 @@ export default function Join() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
               maxLength={50}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-3 bg-surface-light border border-brand/15 rounded-xl text-white placeholder-brand/30 focus:outline-none focus:ring-2 focus:ring-brand/40"
               disabled={loading}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              2-50 characters, letters and numbers only
-            </p>
+            <p className="text-xs text-brand/30 mt-1">2-50 characters</p>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading || !code || !name}
-            className="btn-primary w-full py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-ice w-full py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Joining...' : 'Join Session'}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }

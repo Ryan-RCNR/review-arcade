@@ -1,223 +1,184 @@
 /**
- * Teacher Dashboard Page
+ * Teacher Dashboard
  *
- * Shows list of sessions (active, past, drafts)
- * with quick actions to create/monitor/view results
+ * Shows list of sessions with quick actions.
+ * Updated for new Session type (game_type, teacher_mode, player_count).
  */
 
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { sessionAPI, type Session } from '@review-arcade/shared'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  sessionAPI,
+  AVAILABLE_GAMES,
+  type Session,
+} from '@review-arcade/shared';
+import {
+  Plus,
+  Monitor,
+  BarChart3,
+  Gamepad2,
+  Users,
+  Timer,
+  RefreshCw,
+} from 'lucide-react';
 
-type FilterType = 'all' | 'active' | 'ended'
-
-const STATUS_COLORS: Record<Session['status'], string> = {
-  active: 'bg-green-100 text-green-800 border-green-300',
-  lobby: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  paused: 'bg-orange-100 text-orange-800 border-orange-300',
-  ended: 'bg-gray-100 text-gray-800 border-gray-300',
-  draft: 'bg-blue-100 text-blue-800 border-blue-300',
-}
-
-interface FilterButtonProps {
-  label: string
-  value: FilterType
-  currentFilter: FilterType
-  onClick: (value: FilterType) => void
-}
-
-function FilterButton({ label, value, currentFilter, onClick }: FilterButtonProps): React.JSX.Element {
-  const isActive = currentFilter === value
-  const baseClasses = 'px-4 py-2 rounded-lg transition-colors'
-  const activeClasses = 'bg-primary text-gray-900 font-bold'
-  const inactiveClasses = 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-
-  return (
-    <button
-      onClick={() => onClick(value)}
-      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-    >
-      {label}
-    </button>
-  )
-}
-
-interface SessionActionButtonProps {
-  session: Session
-  onNavigate: (path: string) => void
-}
-
-function SessionActionButton({ session, onNavigate }: SessionActionButtonProps): React.JSX.Element {
-  const isMonitorable = session.status === 'active' || session.status === 'lobby'
-  const isEnded = session.status === 'ended'
-
-  if (isMonitorable) {
-    return (
-      <button
-        onClick={() => onNavigate(`/monitor/${session.id}`)}
-        className="btn-primary flex-1 text-sm py-2"
-      >
-        Monitor
-      </button>
-    )
-  }
-
-  if (isEnded) {
-    return (
-      <button
-        onClick={() => onNavigate(`/results/${session.id}`)}
-        className="btn-ghost flex-1 text-sm py-2"
-      >
-        View Results
-      </button>
-    )
-  }
-
-  return (
-    <button className="btn-ghost flex-1 text-sm py-2">
-      View Details
-    </button>
-  )
-}
+type FilterType = 'all' | 'active' | 'ended';
 
 export default function Dashboard(): React.JSX.Element {
-  const navigate = useNavigate()
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<FilterType>('all')
+  const navigate = useNavigate();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
-    async function fetchSessions(): Promise<void> {
-      try {
-        const sessionsData = await sessionAPI.list(50)
-        setSessions(sessionsData)
-      } catch (err) {
-        console.error('Failed to load sessions:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load sessions')
-      } finally {
-        setLoading(false)
-      }
-    }
+    fetchSessions();
+  }, []);
 
-    fetchSessions()
-  }, [])
-
-  const filteredSessions = sessions.filter((session) => {
-    if (filter === 'active') {
-      return session.status === 'active' || session.status === 'lobby'
+  async function fetchSessions(): Promise<void> {
+    try {
+      setLoading(true);
+      const data = await sessionAPI.list(50);
+      setSessions(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load sessions');
+    } finally {
+      setLoading(false);
     }
-    if (filter === 'ended') {
-      return session.status === 'ended'
-    }
-    return true
-  })
-
-  function getStatusColor(status: Session['status']): string {
-    return STATUS_COLORS[status] || STATUS_COLORS.draft
   }
+
+  const filteredSessions = sessions.filter((s) => {
+    if (filter === 'active') return s.status === 'active' || s.status === 'lobby' || s.status === 'paused';
+    if (filter === 'ended') return s.status === 'ended';
+    return true;
+  });
+
+  const statusColors: Record<string, string> = {
+    active: 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30',
+    lobby: 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30',
+    paused: 'bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/30',
+    ended: 'bg-brand/5 text-brand/40 ring-1 ring-brand/10',
+    draft: 'bg-brand/5 text-brand/30 ring-1 ring-brand/10',
+  };
 
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Actions Bar */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex gap-2">
-            <FilterButton label="All Sessions" value="all" currentFilter={filter} onClick={setFilter} />
-            <FilterButton label="Active" value="active" currentFilter={filter} onClick={setFilter} />
-            <FilterButton label="Ended" value="ended" currentFilter={filter} onClick={setFilter} />
+            {(['all', 'active', 'ended'] as FilterType[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  filter === f
+                    ? 'bg-brand/10 text-brand border border-brand/20'
+                    : 'text-brand/40 hover:text-brand/60 border border-transparent'
+                }`}
+              >
+                {f === 'all' ? 'All Sessions' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
           </div>
 
-          <button
-            onClick={() => navigate('/create')}
-            className="btn-primary"
-          >
-            + Create New Session
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={fetchSessions} className="btn-ghost p-2" title="Refresh">
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+            <button
+              onClick={() => navigate('/create')}
+              className="btn-ice flex items-center gap-2"
+            >
+              <Plus size={18} />
+              New Session
+            </button>
+          </div>
         </div>
 
-        {/* Sessions Grid */}
-        {loading ? (
-          <div className="card text-center py-12">
-            <div className="animate-spin text-4xl mb-4">⏳</div>
-            <p className="text-gray-600">Loading sessions...</p>
+        {/* Content */}
+        {loading && sessions.length === 0 ? (
+          <div className="glass-card text-center py-16">
+            <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-brand/40">Loading sessions...</p>
           </div>
         ) : error ? (
-          <div className="card text-center py-12">
-            <div className="text-4xl mb-4">❌</div>
-            <h3 className="text-xl font-bold text-red-600 mb-2">
-              Failed to load sessions
-            </h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn-primary"
-            >
+          <div className="glass-card text-center py-16">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button onClick={fetchSessions} className="btn-ice">
               Try Again
             </button>
           </div>
         ) : filteredSessions.length === 0 ? (
-          <div className="card text-center py-12">
-            <div className="text-6xl mb-4">📝</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              No sessions yet
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Create your first session to get started!
-            </p>
-            <button
-              onClick={() => navigate('/create')}
-              className="btn-primary"
-            >
+          <div className="glass-card text-center py-16">
+            <Gamepad2 size={48} className="text-brand/10 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">No sessions yet</h3>
+            <p className="text-brand/40 mb-6">Create your first session to get started!</p>
+            <button onClick={() => navigate('/create')} className="btn-ice">
               Create Session
             </button>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredSessions.map((session) => (
-              <div key={session.id} className="card hover:shadow-lg transition-shadow">
-                {/* Session Header */}
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 font-mono">
-                      {session.code}
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {new Date(session.created_at).toLocaleDateString()}
-                    </p>
+            {filteredSessions.map((session) => {
+              const game = AVAILABLE_GAMES.find((g) => g.id === session.game_type);
+              const isMonitorable = session.status === 'active' || session.status === 'lobby' || session.status === 'paused';
+
+              return (
+                <div key={session.id} className="glass-card p-5 hover:border-brand/20 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-2xl font-mono font-bold text-brand tracking-wider">
+                        {session.code}
+                      </p>
+                      <p className="text-xs text-brand/30">
+                        {new Date(session.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[session.status] || statusColors.draft}`}>
+                      {session.status}
+                    </span>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      session.status
-                    )}`}
-                  >
-                    {session.status}
-                  </span>
-                </div>
 
-                {/* Session Info */}
-                <div className="mb-4">
-                  <p className="text-sm text-gray-700 mb-2">
-                    <span className="font-medium">Games:</span>{' '}
-                    {session.config.games.length}
-                  </p>
-                  {session.config.max_players && (
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Max Players:</span>{' '}
-                      {session.config.max_players}
-                    </p>
-                  )}
-                </div>
+                  <div className="space-y-1.5 mb-4 text-sm">
+                    <div className="flex items-center gap-2 text-brand/50">
+                      <Gamepad2 size={14} />
+                      <span>{game?.name || session.game_type}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-brand/50">
+                      <Users size={14} />
+                      <span>{session.player_count} players</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-brand/50">
+                      <Timer size={14} />
+                      <span>{session.config?.time_limit_minutes || 15} min</span>
+                    </div>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <SessionActionButton session={session} onNavigate={navigate} />
+                  {isMonitorable ? (
+                    <button
+                      onClick={() => navigate(`/monitor/${session.code}`)}
+                      className="btn-ice w-full py-2 text-sm flex items-center justify-center gap-2"
+                    >
+                      <Monitor size={16} />
+                      Monitor
+                    </button>
+                  ) : session.status === 'ended' ? (
+                    <button
+                      onClick={() => navigate(`/results/${session.id}`)}
+                      className="btn-ghost w-full py-2 text-sm flex items-center justify-center gap-2"
+                    >
+                      <BarChart3 size={16} />
+                      View Results
+                    </button>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,168 +1,169 @@
 /**
  * Student Lobby Page
  *
- * Waiting room where students see other players joining
+ * Waiting room -- polls for session status, shows player list.
+ * When session becomes active, navigates to Play.
  */
 
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   sessionAPI,
-  playerAPI,
+  getSessionMetadata,
+  AVAILABLE_GAMES,
   POLLING_INTERVAL_FAST_MS,
-  type Session,
-  type Player,
-} from '@review-arcade/shared'
+  type SessionPreview,
+  type GameType,
+} from '@review-arcade/shared';
 
 export default function Lobby() {
-  const { code } = useParams<{ code: string }>()
-  const navigate = useNavigate()
-  const [session, setSession] = useState<Session | null>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
+  const [session, setSession] = useState<SessionPreview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const playerName = sessionStorage.getItem('player_name') || 'You'
+  const metadata = getSessionMetadata();
+  const playerName = metadata?.playerName || 'You';
 
   useEffect(() => {
-    if (!code) return
+    if (!code) return;
 
     const fetchData = async () => {
       try {
-        const [sessionData, playersData] = await Promise.all([
-          sessionAPI.getByCode(code),
-          playerAPI.list(code),
-        ])
+        const data = await sessionAPI.getByCode(code);
+        setSession(data);
+        setLoading(false);
 
-        setSession(sessionData)
-        setPlayers(playersData)
-        setLoading(false)
-
-        // If session is active, navigate to play page
-        if (sessionData.status === 'active') {
-          navigate(`/play/${code}`)
+        if (data.status === 'active') {
+          navigate(`/play/${code}`);
         }
       } catch (err) {
-        console.error('Lobby load failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load session. Please try again.')
-        setLoading(false)
+        setError(err instanceof Error ? err.message : 'Failed to load session');
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-    const interval = setInterval(fetchData, POLLING_INTERVAL_FAST_MS)
-    return () => clearInterval(interval)
-  }, [code, navigate])
+    fetchData();
+    const interval = setInterval(fetchData, POLLING_INTERVAL_FAST_MS);
+    return () => clearInterval(interval);
+  }, [code, navigate]);
+
+  // Redirect if no credentials
+  useEffect(() => {
+    if (!metadata) {
+      navigate('/join');
+    }
+  }, [metadata, navigate]);
+
+  const gameInfo = session
+    ? AVAILABLE_GAMES.find((g) => g.id === session.game_type)
+    : null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary flex items-center justify-center">
-        <div className="card text-center" role="status" aria-live="polite">
-          <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
-          <p className="text-lg font-medium">Loading...</p>
+      <div className="min-h-screen bg-midnight flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-brand/50">Loading lobby...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary flex items-center justify-center p-4">
-        <div className="card max-w-md text-center" role="alert" aria-live="assertive">
-          <p className="text-red-600 font-medium mb-4">{error || 'Session not found'}</p>
-          <a href="/join" className="btn-primary">
+      <div className="min-h-screen bg-midnight flex items-center justify-center p-4">
+        <div className="glass-card max-w-md text-center p-8">
+          <p className="text-red-400 font-medium mb-4">{error || 'Session not found'}</p>
+          <a href="/join" className="btn-ice inline-block px-6 py-2">
             Join Another Session
           </a>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light to-primary p-4">
-      <div className="max-w-2xl mx-auto py-8">
+    <div className="min-h-screen bg-midnight p-4">
+      <div className="max-w-xl mx-auto py-8">
         {/* Header */}
-        <div className="card text-center mb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Review Arcade
-          </h1>
-          <p className="text-xl text-gray-700 mb-4">
-            Session Code: <span className="font-mono font-bold">{code}</span>
+        <div className="glass-card text-center p-8 mb-6">
+          <h1 className="text-3xl font-bold text-white mb-3">Review Arcade</h1>
+          <p className="text-brand/50 mb-1">Session Code</p>
+          <p className="text-4xl font-mono font-bold text-brand tracking-widest mb-6">
+            {code}
           </p>
-          <div
-            className="inline-block bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded-lg"
-            role="status"
-            aria-live="polite"
-          >
-            <p className="font-medium"><span aria-hidden="true">⏳</span> Waiting for teacher to start...</p>
+
+          <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-5 py-2.5 rounded-xl">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="font-medium">Waiting for teacher to start...</span>
           </div>
         </div>
 
-        {/* Player List */}
-        <div className="card">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Players in Lobby ({players.length})
-          </h2>
-
-          {players.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No players yet. Be the first to join!
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {players.map((player, index) => (
-                <div
-                  key={player.id}
-                  className="bg-gray-100 rounded-lg p-3 text-center"
-                >
-                  <div className="text-2xl mb-1">
-                    {index === 0 ? '👑' : '👤'}
-                  </div>
-                  <p className="font-medium text-gray-900 truncate">
-                    {player.name}
-                  </p>
-                  {player.name === playerName && (
-                    <span className="text-xs text-primary-dark">(You)</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Game Info */}
-        {session.config.games && session.config.games.length > 0 && (
-          <div className="card mt-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-3">
-              Games in This Session:
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {session.config.games.map((game) => (
-                <span
-                  key={game}
-                  className="bg-primary text-gray-900 px-4 py-2 rounded-lg font-medium"
-                >
-                  {game.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                </span>
-              ))}
+        {/* Game info */}
+        {gameInfo && (
+          <div className="glass-card p-6 mb-6">
+            <h2 className="text-lg font-semibold text-white mb-3">Today's Game</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand text-xl font-bold">
+                {gameInfo.name.charAt(0)}
+              </div>
+              <div>
+                <p className="text-white font-medium">{gameInfo.name}</p>
+                <p className="text-brand/40 text-sm">{gameInfo.description}</p>
+                <p className="text-brand/30 text-xs mt-1">Controls: {gameInfo.controls}</p>
+              </div>
             </div>
           </div>
         )}
 
+        {/* Player count + your name */}
+        <div className="glass-card p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-brand/50 text-sm">Your Name</p>
+              <p className="text-white font-medium">{playerName}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-brand/50 text-sm">Players</p>
+              <p className="text-white font-bold text-2xl tabular-nums">
+                {session.player_count}
+                <span className="text-brand/30 text-sm font-normal">
+                  /{session.max_players}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Instructions */}
-        <div className="card mt-6 bg-blue-50 border border-blue-200">
-          <h3 className="text-lg font-bold text-blue-900 mb-2">
-            How to Play
-          </h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Wait for your teacher to start the session</li>
-            <li>• Play the arcade games to earn points</li>
-            <li>• Answer review questions when they pop up</li>
-            <li>• Correct answers give you bonus points!</li>
-            <li>• Try to reach the top of the leaderboard</li>
+        <div className="glass-card p-6 border-brand/10">
+          <h3 className="text-white font-semibold mb-3">How to Play</h3>
+          <ul className="text-brand/50 text-sm space-y-2">
+            <li className="flex gap-2">
+              <span className="text-brand/30">1.</span>
+              Play the arcade game to earn points
+            </li>
+            <li className="flex gap-2">
+              <span className="text-brand/30">2.</span>
+              When you die, answer a review question to respawn
+            </li>
+            <li className="flex gap-2">
+              <span className="text-brand/30">3.</span>
+              Correct answers build your streak multiplier (up to 2x)
+            </li>
+            <li className="flex gap-2">
+              <span className="text-brand/30">4.</span>
+              Comeback credits give you a head start when you respawn
+            </li>
+            <li className="flex gap-2">
+              <span className="text-brand/30">5.</span>
+              Compete for the top of the leaderboard!
+            </li>
           </ul>
         </div>
       </div>
     </div>
-  )
+  );
 }

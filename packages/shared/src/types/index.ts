@@ -1,118 +1,103 @@
 /**
  * Review Arcade Shared Types
+ *
+ * Aligned with backend models (2026-02-24):
+ * - Single game_type per session (not games array)
+ * - teacher_mode: monitor | play
+ * - player_token for WS auth
+ * - Streak multiplier + comeback credits
+ * - Server-side answer validation via correct_index
  */
 
-// Session Types
-export interface SessionConfig {
-  games: string[];
-  max_players?: number;
-  time_limit_minutes?: number;
-}
+// =============================================================================
+// Session
+// =============================================================================
 
 export interface Session {
   id: string;
   code: string;
+  teacher_id: string;
   status: 'draft' | 'lobby' | 'active' | 'paused' | 'ended';
+  game_type: GameType;
+  teacher_mode: 'monitor' | 'play';
   config: SessionConfig;
+  player_count: number;
   started_at?: string;
   ended_at?: string;
   created_at: string;
 }
 
+export interface SessionConfig {
+  time_limit_minutes: number;
+  max_players: number;
+  question_config: QuestionConfig;
+}
+
+export interface QuestionConfig {
+  type: string;
+  operations: string[];
+  range: [number, number];
+}
+
 export interface SessionCreate {
-  config: SessionConfig;
+  game_type: GameType;
+  teacher_mode: 'monitor' | 'play';
+  time_limit_minutes: number;
+  max_players: number;
+  question_config?: QuestionConfig;
 }
 
-export interface SessionUpdate {
-  config?: SessionConfig;
-  status?: Session['status'];
+/** Public session info returned for student join screen */
+export interface SessionPreview {
+  code: string;
+  status: string;
+  game_type: GameType;
+  player_count: number;
+  max_players: number;
 }
 
-export interface SessionResponse extends Session {}
+// =============================================================================
+// Player
+// =============================================================================
 
-// Player Types
 export interface Player {
   id: string;
-  session_id: string;
   name: string;
+  session_code: string;
+  player_token: string;
+  is_teacher: boolean;
   joined_at: string;
-  is_active: boolean;
 }
 
 export interface PlayerJoin {
   name: string;
 }
 
-export interface PlayerResponse extends Player {}
-
 export interface LeaderboardEntry {
   rank: number;
   player_id: string;
   player_name: string;
   total_score: number;
-  games_played: number;
+  is_teacher?: boolean;
+  comeback_credits?: number;
+  current_streak?: number;
 }
 
-export interface PlayerStats {
-  player_id: string;
-  player_name: string;
-  total_score: number;
-  game_score: number;
-  question_bonus: number;
-  questions_answered: number;
-  questions_correct: number;
-  accuracy: number;
-  avg_time_ms: number;
-  best_streak: number;
-  games_played: number;
-}
+// =============================================================================
+// Question (sent by server after death)
+// =============================================================================
 
-// Question Types
 export interface Question {
-  id: string;
+  question_id: string;
   question_text: string;
   options: string[];
+  correct_index: number;
   difficulty?: string;
-  subject?: string;
 }
 
-export interface AnswerSubmit {
-  player_id: string;
-  question_id: string;
-  answer: string;
-  time_to_answer_ms?: number;
-}
-
-export interface AnswerResponse {
-  is_correct: boolean;
-  correct_answer?: string;
-  message: string;
-}
-
-export interface QuestionStats {
-  total_questions: number;
-  total_correct: number;
-  accuracy: number;
-  avg_time_ms: number;
-}
-
+// =============================================================================
 // Game Types
-export interface GameScore {
-  player_id: string;
-  game_name: string;
-  game_score: number;
-  metadata?: Record<string, unknown>;
-}
-
-export interface ScoreResponse {
-  score_id: string;
-  player_id: string;
-  player_name: string;
-  game_name: string;
-  game_score: number;
-  question_bonus: number;
-  total_score: number;
-}
+// =============================================================================
 
 export type GameType =
   | 'block-drop'
@@ -130,140 +115,184 @@ export interface GameInfo {
   id: GameType;
   name: string;
   description: string;
-  icon: string;
+  lucideIcon: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  controls: string;
 }
 
 export const AVAILABLE_GAMES: GameInfo[] = [
   {
-    id: 'block-drop',
-    name: 'Block Drop',
-    description: 'Classic Tetris-style puzzle game',
-    icon: '🟦',
-    difficulty: 'medium',
-  },
-  {
-    id: 'space-rocks',
-    name: 'Space Rocks',
-    description: 'Asteroids-inspired space shooter',
-    icon: '🚀',
-    difficulty: 'medium',
-  },
-  {
-    id: 'maze-muncher',
-    name: 'Maze Muncher',
-    description: 'Pac-Man style maze game',
-    icon: '👻',
-    difficulty: 'medium',
+    id: 'snake-pit',
+    name: 'Snake Pit',
+    description: 'Grow your snake, avoid walls and yourself',
+    lucideIcon: 'waypoints',
+    difficulty: 'easy',
+    controls: 'Arrow keys or WASD',
   },
   {
     id: 'brick-breaker',
     name: 'Brick Breaker',
-    description: 'Classic Breakout game',
-    icon: '🧱',
+    description: 'Classic breakout -- destroy all bricks',
+    lucideIcon: 'layout-grid',
     difficulty: 'easy',
-  },
-  {
-    id: 'snake-pit',
-    name: 'Snake Pit',
-    description: 'Grow your snake, avoid walls',
-    icon: '🐍',
-    difficulty: 'easy',
+    controls: 'Arrow keys or mouse',
   },
   {
     id: 'dino-dash',
     name: 'Dino Dash',
-    description: 'Chrome Dino endless runner',
-    icon: '🦖',
+    description: 'Endless runner -- jump over obstacles',
+    lucideIcon: 'rabbit',
     difficulty: 'easy',
+    controls: 'Space or Up to jump',
+  },
+  {
+    id: 'space-rocks',
+    name: 'Space Rocks',
+    description: 'Destroy asteroids, survive the void',
+    lucideIcon: 'rocket',
+    difficulty: 'medium',
+    controls: 'Arrow keys + Space to shoot',
+  },
+  {
+    id: 'maze-muncher',
+    name: 'Maze Muncher',
+    description: 'Eat dots, avoid ghosts',
+    lucideIcon: 'ghost',
+    difficulty: 'medium',
+    controls: 'Arrow keys or WASD',
   },
   {
     id: 'frog-crossing',
     name: 'Frog Crossing',
-    description: 'Frogger-style road crossing',
-    icon: '🐸',
+    description: 'Cross the road and river safely',
+    lucideIcon: 'move',
     difficulty: 'medium',
+    controls: 'Arrow keys',
   },
   {
     id: 'alien-invasion',
     name: 'Alien Invasion',
-    description: 'Space Invaders shooter',
-    icon: '👾',
+    description: 'Defend Earth from alien waves',
+    lucideIcon: 'shield',
     difficulty: 'medium',
+    controls: 'Arrow keys + Space to shoot',
+  },
+  {
+    id: 'block-drop',
+    name: 'Block Drop',
+    description: 'Stack and clear lines, Tetris style',
+    lucideIcon: 'blocks',
+    difficulty: 'medium',
+    controls: 'Arrow keys, Up to rotate',
   },
   {
     id: 'flappy-study',
     name: 'Flappy Study',
-    description: 'Flappy Bird style game',
-    icon: '🐦',
+    description: 'Tap to fly through gaps',
+    lucideIcon: 'bird',
     difficulty: 'hard',
+    controls: 'Space or click to flap',
   },
   {
     id: 'rhythm-rush',
     name: 'Rhythm Rush',
-    description: 'Geometry Dash rhythm game',
-    icon: '⚡',
+    description: 'Jump and slide to the beat',
+    lucideIcon: 'zap',
     difficulty: 'hard',
+    controls: 'Space to jump, Down to duck',
   },
 ];
 
-// WebSocket Types - Generic (deprecated, use specific message types)
-export interface WebSocketMessage {
-  type: string;
-  [key: string]: unknown;
+// =============================================================================
+// GameBridge -- Interface between React and vanilla game engines
+// =============================================================================
+
+export interface GameBridgeCallbacks {
+  /** Player died in the game. Score is the run score before death. */
+  onDeath: (score: number, metadata?: Record<string, unknown>) => void;
+  /** Player triggered a special event (tetris, combo, etc.) */
+  onSpecialEvent: (event: { type: string; [key: string]: unknown }) => void;
+  /** Live score update (informational, for host display) */
+  onScoreUpdate: (score: number) => void;
 }
 
-// Server -> Client WebSocket Messages
-export interface WSLobbyUpdate {
-  type: 'lobby_update';
-  players: Player[];
+export interface GameBridge {
+  /** Mount the game to a canvas element */
+  mount(canvas: HTMLCanvasElement, callbacks: GameBridgeCallbacks): void;
+  /** Start or resume gameplay */
+  start(): void;
+  /** Pause gameplay (question modal open) */
+  pause(): void;
+  /** Resume after answering question */
+  resume(comebackStartScore: number): void;
+  /** Clean up resources */
+  destroy(): void;
+  /** Resize the canvas (window resize) */
+  resize(width: number, height: number): void;
+}
+
+// =============================================================================
+// WebSocket Messages -- Server -> Client
+// =============================================================================
+
+export interface WSHostState {
+  type: 'host_state';
+  status: string;
+  game_type: GameType;
+  teacher_mode: string;
+  players: Array<{
+    player_id: string;
+    display_name: string;
+    is_teacher: boolean;
+    connected: boolean;
+  }>;
+  leaderboard: LeaderboardEntry[];
+  player_count: number;
+  timer_end?: number;
+}
+
+export interface WSPlayerState {
+  type: 'player_state';
+  player_id: string;
+  display_name: string;
+  is_teacher: boolean;
+  status: string;
+  game_type: GameType | null;
+  total_score: number;
+  rank: number;
+  comeback_credits: number;
+  current_streak: number;
+  streak_multiplier: number;
+  timer_end?: number;
+}
+
+export interface WSPlayerConnected {
+  type: 'player_connected';
+  player_id: string;
+  display_name: string;
+  is_teacher: boolean;
   player_count: number;
 }
 
-export interface WSPlayerJoined {
-  type: 'player_joined';
-  player: Player;
-  player_count: number;
-}
-
-export interface WSPlayerLeft {
-  type: 'player_left';
+export interface WSPlayerDisconnected {
+  type: 'player_disconnected';
   player_id: string;
   player_count: number;
 }
 
 export interface WSSessionStarted {
   type: 'session_started';
-  current_game: GameType;
-}
-
-export interface WSGameStarted {
-  type: 'game_started';
   game_type: GameType;
   time_limit_seconds: number;
 }
 
-export interface WSGameEnded {
-  type: 'game_ended';
-  game_type: GameType;
-  leaderboard: LeaderboardEntry[];
+export interface WSSessionPaused {
+  type: 'session_paused';
 }
 
-export interface WSQuestionAvailable {
-  type: 'question_available';
-  question: Question;
-}
-
-export interface WSScoreUpdate {
-  type: 'score_update';
-  player_id: string;
-  score: number;
-  total_score: number;
-}
-
-export interface WSLeaderboardUpdate {
-  type: 'leaderboard_update';
-  leaderboard: LeaderboardEntry[];
+export interface WSSessionResumed {
+  type: 'session_resumed';
+  remaining_seconds: number;
 }
 
 export interface WSSessionEnded {
@@ -271,108 +300,163 @@ export interface WSSessionEnded {
   final_leaderboard: LeaderboardEntry[];
 }
 
+export interface WSQuestion {
+  type: 'question';
+  question: Question;
+  death_score: number;
+  effective_score: number;
+  multiplier: number;
+  comeback_credits: number;
+  total_score: number;
+}
+
+export interface WSAnswerCorrect {
+  type: 'answer_correct';
+  bonus_earned: number;
+  total_score: number;
+  current_streak: number;
+  streak_multiplier: number;
+  comeback_credits: number;
+  comeback_start_score: number;
+  respawn: true;
+}
+
+export interface WSAnswerWrong {
+  type: 'answer_wrong';
+  correct_index: number;
+  respawn: false;
+}
+
+export interface WSLeaderboardUpdate {
+  type: 'leaderboard_update';
+  leaderboard?: LeaderboardEntry[];
+  top_5?: LeaderboardEntry[];
+  your_rank?: number;
+  your_score?: number;
+  total_players?: number;
+}
+
+export interface WSLiveEvent {
+  type: 'live_event';
+  player_id: string;
+  player_name: string;
+  event: Record<string, unknown>;
+}
+
+export interface WSPlayerScoreUpdate {
+  type: 'player_score_update';
+  player_id: string;
+  live_score: number;
+}
+
+export interface WSPing {
+  type: 'ping';
+  t: number;
+}
+
 export interface WSError {
   type: 'error';
   message: string;
-  code?: string;
 }
 
-// Discriminated union of all server messages
 export type ServerWSMessage =
-  | WSLobbyUpdate
-  | WSPlayerJoined
-  | WSPlayerLeft
+  | WSHostState
+  | WSPlayerState
+  | WSPlayerConnected
+  | WSPlayerDisconnected
   | WSSessionStarted
-  | WSGameStarted
-  | WSGameEnded
-  | WSQuestionAvailable
-  | WSScoreUpdate
-  | WSLeaderboardUpdate
+  | WSSessionPaused
+  | WSSessionResumed
   | WSSessionEnded
+  | WSQuestion
+  | WSAnswerCorrect
+  | WSAnswerWrong
+  | WSLeaderboardUpdate
+  | WSLiveEvent
+  | WSPlayerScoreUpdate
+  | WSPing
   | WSError;
 
-// Client -> Server WebSocket Messages
-export interface WSClientInit {
+// =============================================================================
+// WebSocket Messages -- Client -> Server
+// =============================================================================
+
+export interface WSClientInitHost {
   type: 'init';
-  player_id?: string;
-  session_code: string;
+  role: 'host';
+  token: string;
+}
+
+export interface WSClientInitPlayer {
+  type: 'init';
+  role: 'player';
+  player_id: string;
+  player_token: string;
+}
+
+export interface WSClientDeath {
+  type: 'death';
+  score: number;
+  metadata?: Record<string, unknown>;
 }
 
 export interface WSClientAnswer {
   type: 'answer';
   question_id: string;
-  answer: string;
+  answer_index: number;
+  correct_index: number;
   time_ms: number;
 }
 
-export interface WSClientGameScore {
-  type: 'game_score';
-  game_type: GameType;
+export interface WSClientScoreUpdate {
+  type: 'score_update';
   score: number;
 }
 
-export type ClientWSMessage = WSClientInit | WSClientAnswer | WSClientGameScore;
+export interface WSClientSpecialEvent {
+  type: 'special_event';
+  event: { type: string; [key: string]: unknown };
+}
 
-// Type Guards for WebSocket Messages
+export interface WSClientStartSession {
+  type: 'start_session';
+}
+
+export interface WSClientPauseSession {
+  type: 'pause_session';
+}
+
+export interface WSClientResumeSession {
+  type: 'resume_session';
+}
+
+export interface WSClientEndSession {
+  type: 'end_session';
+}
+
+export interface WSClientPong {
+  type: 'pong';
+}
+
+export type ClientWSMessage =
+  | WSClientInitHost
+  | WSClientInitPlayer
+  | WSClientDeath
+  | WSClientAnswer
+  | WSClientScoreUpdate
+  | WSClientSpecialEvent
+  | WSClientStartSession
+  | WSClientPauseSession
+  | WSClientResumeSession
+  | WSClientEndSession
+  | WSClientPong;
+
+export interface WebSocketMessage {
+  type: string;
+  [key: string]: unknown;
+}
+
 export function isServerWSMessage(msg: unknown): msg is ServerWSMessage {
   if (!msg || typeof msg !== 'object') return false;
-  const m = msg as Record<string, unknown>;
-  const validTypes = [
-    'lobby_update',
-    'player_joined',
-    'player_left',
-    'session_started',
-    'game_started',
-    'game_ended',
-    'question_available',
-    'score_update',
-    'leaderboard_update',
-    'session_ended',
-    'error',
-  ];
-  return typeof m.type === 'string' && validTypes.includes(m.type);
-}
-
-export function isLobbyUpdate(msg: unknown): msg is WSLobbyUpdate {
-  return isServerWSMessage(msg) && msg.type === 'lobby_update';
-}
-
-export function isPlayerJoined(msg: unknown): msg is WSPlayerJoined {
-  return isServerWSMessage(msg) && msg.type === 'player_joined';
-}
-
-export function isPlayerLeft(msg: unknown): msg is WSPlayerLeft {
-  return isServerWSMessage(msg) && msg.type === 'player_left';
-}
-
-export function isSessionStarted(msg: unknown): msg is WSSessionStarted {
-  return isServerWSMessage(msg) && msg.type === 'session_started';
-}
-
-export function isGameStarted(msg: unknown): msg is WSGameStarted {
-  return isServerWSMessage(msg) && msg.type === 'game_started';
-}
-
-export function isGameEnded(msg: unknown): msg is WSGameEnded {
-  return isServerWSMessage(msg) && msg.type === 'game_ended';
-}
-
-export function isQuestionAvailable(msg: unknown): msg is WSQuestionAvailable {
-  return isServerWSMessage(msg) && msg.type === 'question_available';
-}
-
-export function isScoreUpdate(msg: unknown): msg is WSScoreUpdate {
-  return isServerWSMessage(msg) && msg.type === 'score_update';
-}
-
-export function isLeaderboardUpdate(msg: unknown): msg is WSLeaderboardUpdate {
-  return isServerWSMessage(msg) && msg.type === 'leaderboard_update';
-}
-
-export function isSessionEnded(msg: unknown): msg is WSSessionEnded {
-  return isServerWSMessage(msg) && msg.type === 'session_ended';
-}
-
-export function isWSError(msg: unknown): msg is WSError {
-  return isServerWSMessage(msg) && msg.type === 'error';
+  return typeof (msg as Record<string, unknown>).type === 'string';
 }

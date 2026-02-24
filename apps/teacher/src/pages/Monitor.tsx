@@ -1,213 +1,415 @@
 /**
  * Teacher Monitor Page
  *
- * Live monitoring view with session controls and leaderboard
+ * Real-time session monitoring via WebSocket.
+ * Shows: join code, player list, live leaderboard, session controls.
+ * Host connects with Clerk JWT for authentication.
  */
 
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  sessionAPI,
-  playerAPI,
-  scoreAPI,
-  POLLING_INTERVAL_NORMAL_MS,
-  DEFAULT_LEADERBOARD_LIMIT,
-  type Session,
-  type Player,
+  useWebSocket,
+  getClerkToken,
+  AVAILABLE_GAMES,
+  type ServerWSMessage,
   type LeaderboardEntry,
-} from '@review-arcade/shared'
+} from '@review-arcade/shared';
+import {
+  Play,
+  Pause,
+  Square,
+  Users,
+  Trophy,
+  ArrowLeft,
+  Wifi,
+  WifiOff,
+  Crown,
+  GraduationCap,
+} from 'lucide-react';
 
-function getLeaderboardEntryStyle(index: number): string {
-  switch (index) {
-    case 0:
-      return 'bg-yellow-600/20 border border-yellow-500/30'
-    case 1:
-      return 'bg-gray-500/20 border border-gray-400/30'
-    case 2:
-      return 'bg-orange-600/20 border border-orange-500/30'
-    default:
-      return 'bg-[#0F2A3D]'
-  }
+interface PlayerInfo {
+  player_id: string;
+  display_name: string;
+  is_teacher: boolean;
+  connected: boolean;
 }
 
 export default function Monitor(): React.JSX.Element {
-  const { id: sessionCode } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const [session, setSession] = useState<Session | null>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<'start' | 'end' | null>(null)
+  const { id: sessionCode } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!sessionCode) return
+  const [status, setStatus] = useState<string>('lobby');
+  const [gameType, setGameType] = useState<string>('');
+  const [teacherMode, setTeacherMode] = useState<string>('monitor');
+  const [players, setPlayers] = useState<PlayerInfo[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [playerCount, setPlayerCount] = useState(0);
+  const [timerEnd, setTimerEnd] = useState<number | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const fetchData = async () => {
-      try {
-        const sessionData = await sessionAPI.getByCode(sessionCode)
-        const playersData = await playerAPI.list(sessionData.code)
-        const leaderboardData = await scoreAPI.getLeaderboard(sessionData.code, DEFAULT_LEADERBOARD_LIMIT)
-
-        setSession(sessionData)
-        setPlayers(playersData)
-        setLeaderboard(leaderboardData)
-        setLoading(false)
-      } catch (err) {
-        console.error('Failed to load session:', err)
+  const { isConnected, send } = useWebSocket<ServerWSMessage>({
+    sessionCode: sessionCode || '',
+    enabled: !!sessionCode,
+    onOpen: () => {
+      const token = getClerkToken();
+      if (token) {
+        send({ type: 'init', role: 'host', token });
       }
+    },
+    onMessage: (msg) => {
+      switch (msg.type) {
+        case 'host_state': {
+          setStatus(msg.status);
+          setGameType(msg.game_type);
+          setTeacherMode(msg.teacher_mode);
+          setPlayers(msg.players);
+          setLeaderboard(msg.leaderboard);
+          setPlayerCount(msg.player_count);
+          setTimerEnd(msg.timer_end ?? null);
+          setInitialized(true);
+          break;
+        }
+
+        case 'player_connected': {
+          setPlayers((prev) => {
+            const exists = prev.find((p) => p.player_id === msg.player_id);
+            if (exists) {
+              return prev.map((p) =>
+                p.player_id === msg.player_id ? { ...p, connected: true } : p,
+              );
+            }
+            return [
+              ...prev,
+              {
+                player_id: msg.player_id,
+                display_name: msg.display_name,
+                is_teacher: msg.is_teacher,
+                connected: true,
+              },
+            ];
+          });
+          setPlayerCount(msg.player_count);
+          break;
+        }
+
+        case 'player_disconnected': {
+          setPlayers((prev) =>
+            prev.map((p) =>
+              p.player_id === msg.player_id ? { ...p, connected: false } : p,
+            ),
+          );
+          setPlayerCount(msg.player_count);
+          break;
+        }
+
+        case 'session_started': {
+          setStatus('active');
+          setGameType(msg.game_type);
+          break;
+        }
+
+        case 'session_paused': {
+          setStatus('paused');
+          break;
+        }
+
+        case 'session_resumed': {
+          setStatus('active');
+          break;
+        }
+
+        case 'session_ended': {
+          setStatus('ended');
+          setLeaderboard(msg.final_leaderboard);
+          break;
+        }
+
+        case 'leaderboard_update': {
+          if (msg.leaderboard) {
+            setLeaderboard(msg.leaderboard);
+          }
+          break;
+        }
+
+        case 'ping': {
+          send({ type: 'pong' });
+          break;
+        }
+
+        case 'error': {
+          setError(msg.message);
+          break;
+        }
+      }
+    },
+  });
+
+  const handleStart = useCallback(() => {
+    send({ type: 'start_session' });
+  }, [send]);
+
+  const handlePause = useCallback(() => {
+    send({ type: 'pause_session' });
+  }, [send]);
+
+  const handleResume = useCallback(() => {
+    send({ type: 'resume_session' });
+  }, [send]);
+
+  const handleEnd = useCallback(() => {
+    if (confirm('End this session? This cannot be undone.')) {
+      send({ type: 'end_session' });
     }
+  }, [send]);
 
-    fetchData()
-    const interval = setInterval(fetchData, POLLING_INTERVAL_NORMAL_MS)
-    return () => clearInterval(interval)
-  }, [sessionCode])
+  const gameInfo = AVAILABLE_GAMES.find((g) => g.id === gameType);
+  const connectedCount = players.filter((p) => p.connected).length;
 
-  const handleStart = async () => {
-    if (!session) return
-    setActionError(null)
-    setActionLoading('start')
-    try {
-      await sessionAPI.start(session.id)
-      // Optimistically update session status
-      setSession({ ...session, status: 'active' })
-    } catch (err) {
-      console.error('Failed to start session:', err)
-      setActionError(err instanceof Error ? err.message : 'Failed to start session')
-    } finally {
-      setActionLoading(null)
-    }
-  }
+  // Timer display
+  const getTimeRemaining = () => {
+    if (!timerEnd) return null;
+    const remaining = Math.max(0, timerEnd - Date.now() / 1000);
+    const minutes = Math.floor(remaining / 60);
+    const seconds = Math.floor(remaining % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
-  const handleEnd = async () => {
-    if (!session || !confirm('End this session?')) return
-    setActionError(null)
-    setActionLoading('end')
-    try {
-      await sessionAPI.end(session.id)
-      navigate(`/results/${session.id}`)
-    } catch (err) {
-      console.error('Failed to end session:', err)
-      setActionError(err instanceof Error ? err.message : 'Failed to end session')
-      setActionLoading(null)
-    }
-  }
-
-  if (loading || !session) {
+  if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-center" role="status" aria-live="polite">
-          <div className="animate-spin text-6xl mb-4" aria-hidden="true">⏳</div>
-          <p className="text-lg">Loading...</p>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-brand/50">Connecting to session...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen text-white">
-      {/* Page sub-header */}
-      <div className="bg-[#0A1E2E] border-b border-gray-700 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold">Session Monitor</h2>
-            <p className="text-gray-400">
-              Code: <span className="font-mono text-primary">{session.code}</span>
-            </p>
+      {/* Top bar */}
+      <div className="bg-surface border-b border-brand/10 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div>
+              <p className="text-brand/40 text-xs uppercase tracking-wider">Session Code</p>
+              <p className="text-3xl font-mono font-bold text-brand tracking-widest">
+                {sessionCode}
+              </p>
+            </div>
+            <div className="border-l border-brand/10 pl-6">
+              <p className="text-brand/40 text-xs">Game</p>
+              <p className="text-white font-medium">{gameInfo?.name || gameType}</p>
+            </div>
+            <div className="border-l border-brand/10 pl-6">
+              <p className="text-brand/40 text-xs">Status</p>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    status === 'active'
+                      ? 'bg-emerald-400'
+                      : status === 'paused'
+                        ? 'bg-amber-400'
+                        : status === 'ended'
+                          ? 'bg-red-400'
+                          : 'bg-brand/40'
+                  }`}
+                />
+                <span className="text-white font-medium capitalize">{status}</span>
+              </div>
+            </div>
+            {timerEnd && status === 'active' && (
+              <div className="border-l border-brand/10 pl-6">
+                <p className="text-brand/40 text-xs">Time Left</p>
+                <p className="text-white font-mono font-bold">{getTimeRemaining()}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isConnected ? (
+              <Wifi size={16} className="text-emerald-400" />
+            ) : (
+              <WifiOff size={16} className="text-red-400" />
+            )}
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="btn-ghost text-sm flex items-center gap-1.5"
+            >
+              <ArrowLeft size={14} />
+              Dashboard
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {error && (
+        <div className="mx-6 mt-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+          {error}
+          <button onClick={() => setError(null)} className="ml-4 underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Controls + Players */}
+        <div className="space-y-6">
           {/* Controls */}
-          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
-            <h2 className="text-xl font-bold mb-4">Controls</h2>
+          <div className="glass-card p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              Controls
+            </h2>
             <div className="space-y-3">
-              <div className="text-sm text-gray-400 mb-4">
-                Status:{' '}
-                <span
-                  className={`font-bold ${
-                    session.status === 'active' ? 'text-green-400' : 'text-yellow-400'
-                  }`}
-                >
-                  {session.status}
-                </span>
-              </div>
-              {actionError && (
-                <div className="bg-red-600/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-400">
-                  {actionError}
-                </div>
-              )}
-              {session.status === 'lobby' && (
+              {status === 'lobby' && (
                 <button
                   onClick={handleStart}
-                  disabled={actionLoading === 'start'}
-                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-ice w-full py-3 flex items-center justify-center gap-2"
                 >
-                  {actionLoading === 'start' ? 'Starting...' : 'Start Session'}
+                  <Play size={18} />
+                  Start Session
                 </button>
               )}
-              {session.status === 'active' && (
-                <button
-                  onClick={handleEnd}
-                  disabled={actionLoading === 'end'}
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {actionLoading === 'end' ? 'Ending...' : 'End Session'}
-                </button>
+              {status === 'active' && (
+                <>
+                  <button
+                    onClick={handlePause}
+                    className="btn-amber w-full py-2.5 flex items-center justify-center gap-2"
+                  >
+                    <Pause size={18} />
+                    Pause
+                  </button>
+                  <button
+                    onClick={handleEnd}
+                    className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Square size={18} />
+                    End Session
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="btn-ghost w-full"
-              >
-                Back to Dashboard
-              </button>
+              {status === 'paused' && (
+                <>
+                  <button
+                    onClick={handleResume}
+                    className="btn-ice w-full py-2.5 flex items-center justify-center gap-2"
+                  >
+                    <Play size={18} />
+                    Resume
+                  </button>
+                  <button
+                    onClick={handleEnd}
+                    className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Square size={18} />
+                    End Session
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* Players */}
-          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
-            <h2 className="text-xl font-bold mb-4">Players ({players.length})</h2>
+          <div className="glass-card p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Users size={18} className="text-brand" />
+              Players ({connectedCount}/{playerCount})
+            </h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {players.map((player) => (
-                <div key={player.id} className="bg-[#0F2A3D] rounded p-3">
-                  <p className="font-medium">{player.name}</p>
+                <div
+                  key={player.player_id}
+                  className="flex items-center gap-3 bg-surface-light rounded-lg p-3"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      player.connected ? 'bg-emerald-400' : 'bg-brand/20'
+                    }`}
+                  />
+                  <span className="text-white text-sm flex-1 truncate">
+                    {player.display_name}
+                  </span>
+                  {player.is_teacher && (
+                    <GraduationCap size={14} className="text-amber-400" />
+                  )}
                 </div>
               ))}
               {players.length === 0 && (
-                <p className="text-gray-500 text-center py-4">
-                  Waiting for players to join...
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Leaderboard */}
-          <div className="bg-[#0A1E2E] rounded-xl p-6 border border-gray-700">
-            <h2 className="text-xl font-bold mb-4">Leaderboard</h2>
-            <div className="space-y-2">
-              {leaderboard.map((entry, index) => (
-                <div
-                  key={entry.player_id}
-                  className={`flex items-center justify-between p-3 rounded ${getLeaderboardEntryStyle(index)}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-lg w-6">{entry.rank}</span>
-                    <span>{entry.player_name}</span>
-                  </div>
-                  <span className="font-mono font-bold">{entry.total_score}</span>
-                </div>
-              ))}
-              {leaderboard.length === 0 && (
-                <p className="text-gray-500 text-center py-4">
-                  No scores yet
+                <p className="text-brand/30 text-center py-6 text-sm">
+                  Waiting for students to join...
                 </p>
               )}
             </div>
           </div>
         </div>
+
+        {/* Leaderboard (takes 2 columns) */}
+        <div className="lg:col-span-2 glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Trophy size={18} className="text-amber-400" />
+            Leaderboard
+          </h2>
+
+          {leaderboard.length === 0 ? (
+            <div className="text-center py-12">
+              <Trophy size={48} className="text-brand/10 mx-auto mb-3" />
+              <p className="text-brand/30">
+                {status === 'lobby'
+                  ? 'Scores will appear once the session starts'
+                  : 'No scores yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {leaderboard.map((entry, index) => (
+                <div
+                  key={entry.player_id}
+                  className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                    index === 0
+                      ? 'bg-amber-500/10 border border-amber-500/20'
+                      : index === 1
+                        ? 'bg-brand/5 border border-brand/10'
+                        : index === 2
+                          ? 'bg-orange-500/5 border border-orange-500/10'
+                          : 'bg-surface-light border border-brand/5'
+                  }`}
+                >
+                  {/* Rank */}
+                  <div className="w-8 text-center">
+                    {index === 0 ? (
+                      <Crown size={20} className="text-amber-400 mx-auto" />
+                    ) : (
+                      <span className="text-brand/40 font-bold">{entry.rank}</span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <div className="flex-1">
+                    <span className="text-white font-medium">{entry.player_name}</span>
+                    {entry.is_teacher && (
+                      <GraduationCap size={12} className="inline ml-1.5 text-amber-400" />
+                    )}
+                  </div>
+
+                  {/* Streak */}
+                  {entry.current_streak && entry.current_streak > 0 && (
+                    <span className="text-amber-400/60 text-xs">
+                      {entry.current_streak}x streak
+                    </span>
+                  )}
+
+                  {/* Score */}
+                  <span className="text-white font-mono font-bold tabular-nums">
+                    {entry.total_score.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  )
+  );
 }
