@@ -2,34 +2,53 @@
  * Game Engine Registry
  *
  * Maps GameType to engine factory functions.
- * Add new games here as they're implemented.
+ * All 10 games implemented.
  */
 
 import type { GameBridge, GameType } from '@review-arcade/shared';
 import { SnakePitEngine } from './SnakePit';
+import { FlappyStudyEngine } from './FlappyStudy';
+import { DinoDashEngine } from './DinoDash';
+import { BrickBreakerEngine } from './BrickBreaker';
+import { AlienInvasionEngine } from './AlienInvasion';
+import { SpaceRocksEngine } from './SpaceRocks';
+import { BlockDropEngine } from './BlockDrop';
+import { FrogCrossingEngine } from './FrogCrossing';
+import { MazeMuncherEngine } from './MazeMuncher';
+import { RhythmRushEngine } from './RhythmRush';
 
 type GameFactory = () => GameBridge;
 
-const GAME_ENGINES: Partial<Record<GameType, GameFactory>> = {
+const GAME_ENGINES: Record<GameType, GameFactory> = {
   'snake-pit': () => new SnakePitEngine(),
-  // TODO: Add more game engines as implemented
-  // 'brick-breaker': () => new BrickBreakerEngine(),
-  // 'dino-dash': () => new DinoDashEngine(),
-  // 'space-rocks': () => new SpaceRocksEngine(),
-  // 'maze-muncher': () => new MazeMuncherEngine(),
-  // 'frog-crossing': () => new FrogCrossingEngine(),
-  // 'alien-invasion': () => new AlienInvasionEngine(),
-  // 'block-drop': () => new BlockDropEngine(),
-  // 'flappy-study': () => new FlappyStudyEngine(),
-  // 'rhythm-rush': () => new RhythmRushEngine(),
+  'flappy-study': () => new FlappyStudyEngine(),
+  'dino-dash': () => new DinoDashEngine(),
+  'brick-breaker': () => new BrickBreakerEngine(),
+  'alien-invasion': () => new AlienInvasionEngine(),
+  'space-rocks': () => new SpaceRocksEngine(),
+  'block-drop': () => new BlockDropEngine(),
+  'frog-crossing': () => new FrogCrossingEngine(),
+  'maze-muncher': () => new MazeMuncherEngine(),
+  'rhythm-rush': () => new RhythmRushEngine(),
 };
 
-export function getGameFactory(gameType: GameType): GameFactory | null {
-  return GAME_ENGINES[gameType] ?? null;
+export function getGameFactory(gameType: GameType): GameFactory {
+  return GAME_ENGINES[gameType];
 }
 
 export function isGameImplemented(gameType: GameType): boolean {
   return gameType in GAME_ENGINES;
 }
 
-export { SnakePitEngine };
+export {
+  SnakePitEngine,
+  FlappyStudyEngine,
+  DinoDashEngine,
+  BrickBreakerEngine,
+  AlienInvasionEngine,
+  SpaceRocksEngine,
+  BlockDropEngine,
+  FrogCrossingEngine,
+  MazeMuncherEngine,
+  RhythmRushEngine,
+};
