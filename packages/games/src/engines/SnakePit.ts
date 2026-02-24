@@ -45,7 +45,6 @@ export class SnakePitEngine implements GameBridge {
   private rows = 0;
   private snake: Point[] = [];
   private direction: Direction = 'right';
-  private nextDirection: Direction = 'right';
   private food: Point = { x: 0, y: 0 };
   private score = 0;
   private speed = INITIAL_SPEED;
@@ -53,7 +52,6 @@ export class SnakePitEngine implements GameBridge {
   private paused = false;
   private gameOver = false;
   private tickTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastFrameTime = 0;
   private animFrame = 0;
 
   // Input buffer -- queue direction changes to prevent 180-degree turns
@@ -139,7 +137,6 @@ export class SnakePitEngine implements GameBridge {
     this.score = 0;
     this.speed = INITIAL_SPEED;
     this.direction = 'right';
-    this.nextDirection = 'right';
     this.inputQueue = [];
 
     // Start snake in center

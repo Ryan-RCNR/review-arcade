@@ -13,7 +13,6 @@ import {
   AVAILABLE_GAMES,
   POLLING_INTERVAL_FAST_MS,
   type SessionPreview,
-  type GameType,
 } from '@review-arcade/shared';
 
 export default function Lobby() {

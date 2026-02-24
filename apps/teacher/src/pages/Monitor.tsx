@@ -41,7 +41,7 @@ export default function Monitor(): React.JSX.Element {
 
   const [status, setStatus] = useState<string>('lobby');
   const [gameType, setGameType] = useState<string>('');
-  const [teacherMode, setTeacherMode] = useState<string>('monitor');
+  const [, setTeacherMode] = useState<string>('monitor');
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [playerCount, setPlayerCount] = useState(0);
