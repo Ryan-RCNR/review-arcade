@@ -14,6 +14,7 @@ import {
   AVAILABLE_GAMES,
   type ServerWSMessage,
   type LeaderboardEntry,
+  type Award,
 } from '@review-arcade/shared';
 import {
   Play,
@@ -26,6 +27,16 @@ import {
   WifiOff,
   Crown,
   GraduationCap,
+  Star,
+  Medal,
+  Zap,
+  Target,
+  Flame,
+  Brain,
+  Timer,
+  TrendingUp,
+  Sparkles,
+  Gamepad2,
 } from 'lucide-react';
 
 interface PlayerInfo {
@@ -44,6 +55,7 @@ export default function Monitor(): React.JSX.Element {
   const [, setTeacherMode] = useState<string>('monitor');
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [playerCount, setPlayerCount] = useState(0);
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -123,6 +135,7 @@ export default function Monitor(): React.JSX.Element {
         case 'session_ended': {
           setStatus('ended');
           setLeaderboard(msg.final_leaderboard);
+          setAwards(msg.awards);
           break;
         }
 
@@ -166,6 +179,29 @@ export default function Monitor(): React.JSX.Element {
 
   const gameInfo = AVAILABLE_GAMES.find((g) => g.id === gameType);
   const connectedCount = players.filter((p) => p.connected).length;
+
+  // Map award icon strings to Lucide components
+  const AWARD_ICONS: Record<string, React.ElementType> = {
+    trophy: Trophy,
+    medal: Medal,
+    crown: Crown,
+    star: Star,
+    zap: Zap,
+    target: Target,
+    flame: Flame,
+    brain: Brain,
+    timer: Timer,
+    trending_up: TrendingUp,
+    sparkles: Sparkles,
+    gamepad: Gamepad2,
+  };
+
+  // Group awards by player for the teacher view
+  const awardsByPlayer = awards.reduce<Record<string, Award[]>>((acc, award) => {
+    if (!acc[award.player_name]) acc[award.player_name] = [];
+    acc[award.player_name].push(award);
+    return acc;
+  }, {});
 
   // Timer display
   const getTimeRemaining = () => {
@@ -254,119 +290,20 @@ export default function Monitor(): React.JSX.Element {
         </div>
       )}
 
-      <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Controls + Players */}
-        <div className="space-y-6">
-          {/* Controls */}
+      {/* Session ended -- Results view */}
+      {status === 'ended' ? (
+        <div className="p-6 max-w-4xl mx-auto space-y-6">
+          {/* Final Leaderboard */}
           <div className="glass-card p-6">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              Controls
+              <Trophy size={18} className="text-amber-400" />
+              Final Standings
             </h2>
-            <div className="space-y-3">
-              {status === 'lobby' && (
-                <button
-                  onClick={handleStart}
-                  className="btn-ice w-full py-3 flex items-center justify-center gap-2"
-                >
-                  <Play size={18} />
-                  Start Session
-                </button>
-              )}
-              {status === 'active' && (
-                <>
-                  <button
-                    onClick={handlePause}
-                    className="btn-amber w-full py-2.5 flex items-center justify-center gap-2"
-                  >
-                    <Pause size={18} />
-                    Pause
-                  </button>
-                  <button
-                    onClick={handleEnd}
-                    className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Square size={18} />
-                    End Session
-                  </button>
-                </>
-              )}
-              {status === 'paused' && (
-                <>
-                  <button
-                    onClick={handleResume}
-                    className="btn-ice w-full py-2.5 flex items-center justify-center gap-2"
-                  >
-                    <Play size={18} />
-                    Resume
-                  </button>
-                  <button
-                    onClick={handleEnd}
-                    className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Square size={18} />
-                    End Session
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Players */}
-          <div className="glass-card p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Users size={18} className="text-brand" />
-              Players ({connectedCount}/{playerCount})
-            </h2>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {players.map((player) => (
-                <div
-                  key={player.player_id}
-                  className="flex items-center gap-3 bg-surface-light rounded-lg p-3"
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      player.connected ? 'bg-emerald-400' : 'bg-brand/20'
-                    }`}
-                  />
-                  <span className="text-white text-sm flex-1 truncate">
-                    {player.display_name}
-                  </span>
-                  {player.is_teacher && (
-                    <GraduationCap size={14} className="text-amber-400" />
-                  )}
-                </div>
-              ))}
-              {players.length === 0 && (
-                <p className="text-brand/30 text-center py-6 text-sm">
-                  Waiting for students to join...
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Leaderboard (takes 2 columns) */}
-        <div className="lg:col-span-2 glass-card p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Trophy size={18} className="text-amber-400" />
-            Leaderboard
-          </h2>
-
-          {leaderboard.length === 0 ? (
-            <div className="text-center py-12">
-              <Trophy size={48} className="text-brand/10 mx-auto mb-3" />
-              <p className="text-brand/30">
-                {status === 'lobby'
-                  ? 'Scores will appear once the session starts'
-                  : 'No scores yet'}
-              </p>
-            </div>
-          ) : (
             <div className="space-y-2">
               {leaderboard.map((entry, index) => (
                 <div
                   key={entry.player_id}
-                  className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                  className={`flex items-center gap-4 p-4 rounded-xl ${
                     index === 0
                       ? 'bg-amber-500/10 border border-amber-500/20'
                       : index === 1
@@ -376,7 +313,6 @@ export default function Monitor(): React.JSX.Element {
                           : 'bg-surface-light border border-brand/5'
                   }`}
                 >
-                  {/* Rank */}
                   <div className="w-8 text-center">
                     {index === 0 ? (
                       <Crown size={20} className="text-amber-400 mx-auto" />
@@ -384,32 +320,235 @@ export default function Monitor(): React.JSX.Element {
                       <span className="text-brand/40 font-bold">{entry.rank}</span>
                     )}
                   </div>
-
-                  {/* Name */}
                   <div className="flex-1">
                     <span className="text-white font-medium">{entry.player_name}</span>
                     {entry.is_teacher && (
                       <GraduationCap size={12} className="inline ml-1.5 text-amber-400" />
                     )}
                   </div>
-
-                  {/* Streak */}
                   {entry.current_streak && entry.current_streak > 0 && (
                     <span className="text-amber-400/60 text-xs">
                       {entry.current_streak}x streak
                     </span>
                   )}
-
-                  {/* Score */}
                   <span className="text-white font-mono font-bold tabular-nums">
                     {entry.total_score.toLocaleString()}
                   </span>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Awards by player */}
+          {awards.length > 0 && (
+            <div className="glass-card p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Star size={18} className="text-amber-400" />
+                Awards
+              </h2>
+              <div className="space-y-4">
+                {Object.entries(awardsByPlayer).map(([playerName, playerAwards]) => (
+                  <div key={playerName}>
+                    <p className="text-brand/60 text-sm font-medium mb-2">{playerName}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {playerAwards.map((award) => {
+                        const IconComp = AWARD_ICONS[award.icon] || Trophy;
+                        return (
+                          <div
+                            key={award.award_key}
+                            className="flex items-center gap-3 bg-surface-light rounded-lg p-3"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                              <IconComp size={16} className="text-amber-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white text-sm font-medium truncate">
+                                {award.award_name}
+                              </p>
+                              <p className="text-brand/40 text-xs truncate">
+                                {award.award_value}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
+
+          {/* Actions */}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => navigate('/create')}
+              className="btn-ice px-6 py-2.5 flex items-center gap-2"
+            >
+              <Play size={16} />
+              New Session
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="btn-ghost px-6 py-2.5 flex items-center gap-2"
+            >
+              <ArrowLeft size={16} />
+              Dashboard
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Active session -- Monitoring view */
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Controls + Players */}
+          <div className="space-y-6">
+            {/* Controls */}
+            <div className="glass-card p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                Controls
+              </h2>
+              <div className="space-y-3">
+                {status === 'lobby' && (
+                  <button
+                    onClick={handleStart}
+                    className="btn-ice w-full py-3 flex items-center justify-center gap-2"
+                  >
+                    <Play size={18} />
+                    Start Session
+                  </button>
+                )}
+                {status === 'active' && (
+                  <>
+                    <button
+                      onClick={handlePause}
+                      className="btn-amber w-full py-2.5 flex items-center justify-center gap-2"
+                    >
+                      <Pause size={18} />
+                      Pause
+                    </button>
+                    <button
+                      onClick={handleEnd}
+                      className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Square size={18} />
+                      End Session
+                    </button>
+                  </>
+                )}
+                {status === 'paused' && (
+                  <>
+                    <button
+                      onClick={handleResume}
+                      className="btn-ice w-full py-2.5 flex items-center justify-center gap-2"
+                    >
+                      <Play size={18} />
+                      Resume
+                    </button>
+                    <button
+                      onClick={handleEnd}
+                      className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Square size={18} />
+                      End Session
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Players */}
+            <div className="glass-card p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Users size={18} className="text-brand" />
+                Players ({connectedCount}/{playerCount})
+              </h2>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {players.map((player) => (
+                  <div
+                    key={player.player_id}
+                    className="flex items-center gap-3 bg-surface-light rounded-lg p-3"
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        player.connected ? 'bg-emerald-400' : 'bg-brand/20'
+                      }`}
+                    />
+                    <span className="text-white text-sm flex-1 truncate">
+                      {player.display_name}
+                    </span>
+                    {player.is_teacher && (
+                      <GraduationCap size={14} className="text-amber-400" />
+                    )}
+                  </div>
+                ))}
+                {players.length === 0 && (
+                  <p className="text-brand/30 text-center py-6 text-sm">
+                    Waiting for students to join...
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Leaderboard (takes 2 columns) */}
+          <div className="lg:col-span-2 glass-card p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Trophy size={18} className="text-amber-400" />
+              Leaderboard
+            </h2>
+
+            {leaderboard.length === 0 ? (
+              <div className="text-center py-12">
+                <Trophy size={48} className="text-brand/10 mx-auto mb-3" />
+                <p className="text-brand/30">
+                  {status === 'lobby'
+                    ? 'Scores will appear once the session starts'
+                    : 'No scores yet'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {leaderboard.map((entry, index) => (
+                  <div
+                    key={entry.player_id}
+                    className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
+                      index === 0
+                        ? 'bg-amber-500/10 border border-amber-500/20'
+                        : index === 1
+                          ? 'bg-brand/5 border border-brand/10'
+                          : index === 2
+                            ? 'bg-orange-500/5 border border-orange-500/10'
+                            : 'bg-surface-light border border-brand/5'
+                    }`}
+                  >
+                    <div className="w-8 text-center">
+                      {index === 0 ? (
+                        <Crown size={20} className="text-amber-400 mx-auto" />
+                      ) : (
+                        <span className="text-brand/40 font-bold">{entry.rank}</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-white font-medium">{entry.player_name}</span>
+                      {entry.is_teacher && (
+                        <GraduationCap size={12} className="inline ml-1.5 text-amber-400" />
+                      )}
+                    </div>
+                    {entry.current_streak && entry.current_streak > 0 && (
+                      <span className="text-amber-400/60 text-xs">
+                        {entry.current_streak}x streak
+                      </span>
+                    )}
+                    <span className="text-white font-mono font-bold tabular-nums">
+                      {entry.total_score.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

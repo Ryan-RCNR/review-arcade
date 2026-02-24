@@ -96,7 +96,13 @@ export default function Play() {
 
         case 'session_ended': {
           navigate(`/results/${code}`, {
-            state: { leaderboard: msg.final_leaderboard },
+            state: {
+              leaderboard: msg.final_leaderboard,
+              awards: msg.awards,
+              playerId,
+              playerName,
+              gameType,
+            },
           });
           break;
         }

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Join from './pages/Join'
 import Lobby from './pages/Lobby'
 import Play from './pages/Play'
+import Results from './pages/Results'
 import { OfflineBanner } from './components/OfflineBanner'
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/join" element={<Join />} />
         <Route path="/lobby/:code" element={<Lobby />} />
         <Route path="/play/:code" element={<Play />} />
+        <Route path="/results/:code" element={<Results />} />
       </Routes>
     </BrowserRouter>
   )

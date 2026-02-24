@@ -204,6 +204,19 @@ export const AVAILABLE_GAMES: GameInfo[] = [
 ];
 
 // =============================================================================
+// Awards
+// =============================================================================
+
+export interface Award {
+  player_id: string;
+  player_name: string;
+  award_key: string;
+  award_name: string;
+  award_value: string;
+  icon: string;
+}
+
+// =============================================================================
 // GameBridge -- Interface between React and vanilla game engines
 // =============================================================================
 
@@ -298,6 +311,7 @@ export interface WSSessionResumed {
 export interface WSSessionEnded {
   type: 'session_ended';
   final_leaderboard: LeaderboardEntry[];
+  awards: Award[];
 }
 
 export interface WSQuestion {
