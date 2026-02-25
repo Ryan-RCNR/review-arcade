@@ -44,7 +44,9 @@ export interface SessionCreate {
   teacher_mode: 'monitor' | 'play';
   time_limit_minutes: number;
   max_players: number;
+  question_source?: QuestionSource;
   question_config?: QuestionConfig;
+  question_bank_ids?: string[];
 }
 
 /** Public session info returned for student join screen */
@@ -91,9 +93,17 @@ export interface Question {
   question_id: string;
   question_text: string;
   options: string[];
-  correct_index: number;
   difficulty?: string;
 }
+
+/** Question with correct answer visible -- for teacher preview during bank creation */
+export interface QuestionWithAnswer extends Question {
+  correct_index: number;
+  category?: string;
+  id?: string;
+}
+
+export type QuestionSource = 'math' | 'custom';
 
 // =============================================================================
 // Game Types
@@ -418,7 +428,6 @@ export interface WSClientAnswer {
   type: 'answer';
   question_id: string;
   answer_index: number;
-  correct_index: number;
   time_ms: number;
 }
 

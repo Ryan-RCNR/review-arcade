@@ -14,6 +14,7 @@ import type {
   SessionCreate,
   SessionPreview,
   Player,
+  QuestionWithAnswer,
 } from '../types';
 
 const getApiUrl = () =>
@@ -113,6 +114,72 @@ export const playerAPI = {
   joinAsTeacher: async (code: string): Promise<Player> => {
     return apiFetch(`/api/reviewarcade/sessions/${code}/join-teacher`, {
       method: 'POST',
+    });
+  },
+};
+
+// ========================================
+// Question Bank API (teacher, requires Clerk auth)
+// ========================================
+
+interface QuestionBankResponse {
+  questions: QuestionWithAnswer[];
+  count: number;
+}
+
+export const questionAPI = {
+  /** Generate questions from teacher content via AI (60s timeout) */
+  generate: async (
+    content: string,
+    count: number = 40,
+    subject?: string,
+    gradeLevel?: string,
+  ): Promise<QuestionBankResponse> => {
+    return apiFetch('/api/reviewarcade/sessions/generate-questions', {
+      method: 'POST',
+      body: JSON.stringify({
+        content,
+        count,
+        subject: subject || null,
+        grade_level: gradeLevel || null,
+      }),
+      timeout: 60000,
+    });
+  },
+
+  /** Amplify seed questions with AI-generated additions (60s timeout) */
+  amplify: async (
+    seedQuestions: QuestionWithAnswer[],
+    content: string,
+    count: number = 30,
+    subject?: string,
+    gradeLevel?: string,
+  ): Promise<QuestionBankResponse> => {
+    return apiFetch('/api/reviewarcade/sessions/amplify-questions', {
+      method: 'POST',
+      body: JSON.stringify({
+        seed_questions: seedQuestions.map((q) => ({
+          question_text: q.question_text,
+          options: q.options,
+          correct_index: q.correct_index,
+        })),
+        content,
+        count,
+        subject: subject || null,
+        grade_level: gradeLevel || null,
+      }),
+      timeout: 60000,
+    });
+  },
+
+  /** Parse teacher-pasted question text into structured format */
+  parse: async (
+    rawText: string,
+    subject?: string,
+  ): Promise<QuestionBankResponse> => {
+    return apiFetch('/api/reviewarcade/sessions/parse-questions', {
+      method: 'POST',
+      body: JSON.stringify({ raw_text: rawText, subject: subject || null }),
     });
   },
 };

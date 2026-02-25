@@ -173,12 +173,11 @@ export default function Play() {
   );
 
   const handleAnswer = useCallback(
-    (questionId: string, answerIndex: number, correctIndex: number, timeMs: number) => {
+    (questionId: string, answerIndex: number, timeMs: number) => {
       send({
         type: 'answer',
         question_id: questionId,
         answer_index: answerIndex,
-        correct_index: correctIndex,
         time_ms: timeMs,
       });
     },

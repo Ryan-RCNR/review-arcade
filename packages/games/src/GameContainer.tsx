@@ -26,11 +26,10 @@ interface GameContainerProps {
   createGame: () => GameBridge;
   /** Called when player dies -- send death to server */
   onDeath: (score: number, metadata?: Record<string, unknown>) => void;
-  /** Called when player answers -- send answer to server */
+  /** Called when player answers -- send answer to server (server validates) */
   onAnswer: (
     questionId: string,
     answerIndex: number,
-    correctIndex: number,
     timeMs: number,
   ) => void;
   /** Called on live score update */
@@ -191,7 +190,7 @@ export function GameContainer({
     (answerIndex: number) => {
       if (!question) return;
       const timeMs = Date.now() - answerStartTime;
-      onAnswer(question.question_id, answerIndex, question.correct_index, timeMs);
+      onAnswer(question.question_id, answerIndex, timeMs);
     },
     [question, answerStartTime, onAnswer],
   );
