@@ -37,6 +37,7 @@ import {
   ChevronDown,
   ChevronUp,
   Calculator,
+  Upload,
 } from 'lucide-react';
 
 type QuestionTab = 'math' | 'custom' | 'generate';
@@ -285,6 +286,61 @@ export default function CreateSession(): React.JSX.Element {
       setParseLoading(false);
     }
   }, [pasteText, amplifySubject]);
+
+  // --- File upload for questions (CSV/TXT) ---
+  const handleQuestionFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Only allow text-based files
+      const allowed = ['.csv', '.txt', '.tsv'];
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+      if (!allowed.includes(ext)) {
+        setParseError('Please upload a .csv, .txt, or .tsv file');
+        return;
+      }
+
+      setParseLoading(true);
+      setParseError('');
+      try {
+        const text = await file.text();
+        const result = await questionAPI.parse(text, amplifySubject || undefined);
+        const newQs = result.questions as QuestionWithAnswer[];
+        setQuestionBank((prev) => [...prev, ...newQs]);
+        setQuestionBankIds((prev) => [
+          ...prev,
+          ...newQs.filter((q) => q.id).map((q) => q.id!),
+        ]);
+      } catch (err) {
+        setParseError(
+          err instanceof Error ? err.message : 'Failed to parse file',
+        );
+      } finally {
+        setParseLoading(false);
+        // Reset input so same file can be re-uploaded
+        e.target.value = '';
+      }
+    },
+    [amplifySubject],
+  );
+
+  // --- File upload for content (TXT) ---
+  const handleContentFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        setGenContent((prev) => (prev ? prev + '\n\n' + text : text));
+      } catch {
+        setGenError('Failed to read file');
+      }
+      e.target.value = '';
+    },
+    [],
+  );
 
   // --- Manual add ---
   const handleManualAdd = useCallback((q: QuestionWithAnswer) => {
@@ -626,7 +682,7 @@ export default function CreateSession(): React.JSX.Element {
                     rows={6}
                     className="w-full bg-surface-light border border-brand/15 rounded-xl px-4 py-3 text-white placeholder-brand/30 text-sm focus:outline-none focus:border-brand/40 resize-y"
                   />
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <button
                       type="button"
                       onClick={handleParse}
@@ -640,6 +696,16 @@ export default function CreateSession(): React.JSX.Element {
                       )}
                       Parse Questions
                     </button>
+                    <label className="btn-ghost text-xs px-4 py-1.5 flex items-center gap-1.5 cursor-pointer border border-brand/20 rounded-lg">
+                      <Upload size={12} />
+                      Upload File (.csv, .txt)
+                      <input
+                        type="file"
+                        accept=".csv,.txt,.tsv"
+                        onChange={handleQuestionFileUpload}
+                        className="hidden"
+                      />
+                    </label>
                     {parseError && (
                       <span className="text-red-400 text-xs">{parseError}</span>
                     )}
@@ -833,6 +899,23 @@ export default function CreateSession(): React.JSX.Element {
                   rows={6}
                   className="w-full bg-surface-light border border-brand/15 rounded-xl px-4 py-3 text-white placeholder-brand/30 text-sm focus:outline-none focus:border-brand/40 resize-y"
                 />
+                <div className="mt-2 mb-4">
+                  <label className="btn-ghost text-xs px-4 py-1.5 inline-flex items-center gap-1.5 cursor-pointer border border-brand/20 rounded-lg">
+                    <Upload size={12} />
+                    Upload File (.txt, .csv)
+                    <input
+                      type="file"
+                      accept=".txt,.csv,.tsv,.md"
+                      onChange={handleContentFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  {genContent && (
+                    <span className="text-brand/40 text-xs ml-3">
+                      {genContent.length.toLocaleString()} characters
+                    </span>
+                  )}
+                </div>
 
                 <div className="flex gap-3">
                   <div className="flex-1">
