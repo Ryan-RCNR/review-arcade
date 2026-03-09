@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SignedIn, SignedOut, RedirectToSignIn, UserButton } from '@clerk/clerk-react'
 import { BookOpen, AlertCircle, PlusCircle } from 'lucide-react'
@@ -6,6 +7,7 @@ import CreateSession from './pages/CreateSession'
 import Monitor from './pages/Monitor'
 import { useClerkToken } from './hooks'
 import { HowItWorksOverlay, useHowItWorks } from './components/HowItWorksOverlay'
+import { ReportIssueModal, RequestToolModal } from '@rcnr/theme'
 import type { ReactNode } from 'react'
 
 /* ── RCNR Nav Components ─────────────────────────────────────── */
@@ -49,15 +51,7 @@ function NavButton({ onClick, icon, label, title }: {
   )
 }
 
-function NavActions({ onHowItWorks }: { onHowItWorks?: () => void }): React.JSX.Element {
-  const handleReport = () => {
-    window.open('mailto:support@rcnr.net?subject=Bug%20Report%20-%20Review%20Arcade', '_blank')
-  }
-
-  const handleRequest = () => {
-    window.open('mailto:requests@rcnr.net?subject=Tool%20Request', '_blank')
-  }
-
+function NavActions({ onHowItWorks, onReport, onRequest }: { onHowItWorks?: () => void; onReport: () => void; onRequest: () => void }): React.JSX.Element {
   return (
     <>
       {onHowItWorks && (
@@ -69,13 +63,13 @@ function NavActions({ onHowItWorks }: { onHowItWorks?: () => void }): React.JSX.
         />
       )}
       <NavButton
-        onClick={handleReport}
+        onClick={onReport}
         title="Report an issue"
         label="Report Issue"
         icon={<AlertCircle size={18} />}
       />
       <NavButton
-        onClick={handleRequest}
+        onClick={onRequest}
         title="Request a tool to be made"
         label="Request Tool"
         icon={<PlusCircle size={18} />}
@@ -132,7 +126,7 @@ function Layout({ children, onHowItWorks }: { children: React.ReactNode; onHowIt
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <NavActions onHowItWorks={onHowItWorks} />
+            <NavActions onHowItWorks={onHowItWorks} onReport={onReport} onRequest={onRequest} />
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
@@ -178,7 +172,7 @@ export default function App(): React.JSX.Element {
         <Route
           path="/"
           element={
-            <ProtectedRoute onHowItWorks={howItWorks.open}>
+            <ProtectedRoute onHowItWorks={howItWorks.open} onReport={() => setReportOpen(true)} onRequest={() => setRequestOpen(true)}>
               <Navigate to="/dashboard" replace />
             </ProtectedRoute>
           }
@@ -186,7 +180,7 @@ export default function App(): React.JSX.Element {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute onHowItWorks={howItWorks.open}>
+            <ProtectedRoute onHowItWorks={howItWorks.open} onReport={() => setReportOpen(true)} onRequest={() => setRequestOpen(true)}>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -194,7 +188,7 @@ export default function App(): React.JSX.Element {
         <Route
           path="/create"
           element={
-            <ProtectedRoute onHowItWorks={howItWorks.open}>
+            <ProtectedRoute onHowItWorks={howItWorks.open} onReport={() => setReportOpen(true)} onRequest={() => setRequestOpen(true)}>
               <CreateSession />
             </ProtectedRoute>
           }
@@ -202,13 +196,15 @@ export default function App(): React.JSX.Element {
         <Route
           path="/monitor/:id"
           element={
-            <ProtectedRoute onHowItWorks={howItWorks.open}>
+            <ProtectedRoute onHowItWorks={howItWorks.open} onReport={() => setReportOpen(true)} onRequest={() => setRequestOpen(true)}>
               <Monitor />
             </ProtectedRoute>
           }
         />
       </Routes>
 
+      <ReportIssueModal isOpen={reportOpen} onClose={() => setReportOpen(false)} toolName="Review Arcade" />
+      <RequestToolModal isOpen={requestOpen} onClose={() => setRequestOpen(false)} toolName="Review Arcade" />
       <HowItWorksOverlay
         isOpen={howItWorks.isOpen}
         onClose={howItWorks.close}
