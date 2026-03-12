@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from "react";
-import { X, BookOpen } from "lucide-react";
+import { X, BookOpen, Film } from "lucide-react";
 
 interface Section {
   title: string;
