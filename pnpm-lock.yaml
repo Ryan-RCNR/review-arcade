@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@rcnr/theme':
-        specifier: ^2.0.3
-        version: 2.0.3(react@19.2.4)
+        specifier: ^4.0.4
+        version: 4.0.4(lucide-react@0.563.0(react@19.2.4))(react@19.2.4)
       '@sentry/react':
         specifier: ^10.39.0
         version: 10.39.0(react@19.2.4)
@@ -648,9 +648,10 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@rcnr/theme@2.0.3':
-    resolution: {integrity: sha512-Q0gC1J0IiYSuijcu7s+B9qmu3PhroIZ9WJzwsOq2Si4uw/Gf4ftnGVyb9/RwktdvxyHnprbpjVYwl40NxtAfbg==}
+  '@rcnr/theme@4.0.4':
+    resolution: {integrity: sha512-+lGFSvTbtZY30JFnmERwBaz5srEOOZSwXYemV5FEKn+XnWNhwBNRJDmuEsrgKNcOcDNnegeCt82aXFiYOSFmUA==}
     peerDependencies:
+      lucide-react: '>=0.300.0'
       react: '>=18'
 
   '@rolldown/pluginutils@1.0.0-rc.3':
@@ -2714,8 +2715,9 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@rcnr/theme@2.0.3(react@19.2.4)':
+  '@rcnr/theme@4.0.4(lucide-react@0.563.0(react@19.2.4))(react@19.2.4)':
     dependencies:
+      lucide-react: 0.563.0(react@19.2.4)
       react: 19.2.4
 
   '@rolldown/pluginutils@1.0.0-rc.3': {}
