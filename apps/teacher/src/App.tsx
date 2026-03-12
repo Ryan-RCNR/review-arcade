@@ -7,7 +7,7 @@ import CreateSession from './pages/CreateSession'
 import Monitor from './pages/Monitor'
 import { useClerkToken } from './hooks'
 import { HowItWorksOverlay, useHowItWorks } from './components/HowItWorksOverlay'
-import { ReportIssueModal, RequestToolModal } from '@rcnr/theme'
+import { ReportIssueModal, RequestToolModal, ThemeToggle } from '@rcnr/theme'
 import type { ReactNode } from 'react'
 
 /* ── RCNR Nav Components ─────────────────────────────────────── */
@@ -114,7 +114,7 @@ const HOW_IT_WORKS_SECTIONS = [
 
 /* ── Layout ──────────────────────────────────────────────────── */
 
-function Layout({ children, onHowItWorks }: { children: React.ReactNode; onHowItWorks: () => void }): React.JSX.Element {
+function Layout({ children, onHowItWorks, onReport, onRequest }: { children: React.ReactNode; onHowItWorks: () => void; onReport: () => void; onRequest: () => void }): React.JSX.Element {
   return (
     <div className="min-h-screen">
       <header className="glass-card border-b border-brand/15 px-6 py-4">
@@ -127,6 +127,7 @@ function Layout({ children, onHowItWorks }: { children: React.ReactNode; onHowIt
           </div>
           <div className="flex items-center gap-2">
             <NavActions onHowItWorks={onHowItWorks} onReport={onReport} onRequest={onRequest} />
+            <ThemeToggle />
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
@@ -143,16 +144,18 @@ function Layout({ children, onHowItWorks }: { children: React.ReactNode; onHowIt
 interface ProtectedRouteProps {
   children: React.ReactNode
   onHowItWorks: () => void
+  onReport: () => void
+  onRequest: () => void
 }
 
-function ProtectedRoute({ children, onHowItWorks }: ProtectedRouteProps): React.JSX.Element {
+function ProtectedRoute({ children, onHowItWorks, onReport, onRequest }: ProtectedRouteProps): React.JSX.Element {
   // Store Clerk token in memory for API requests
   useClerkToken();
 
   return (
     <>
       <SignedIn>
-        <Layout onHowItWorks={onHowItWorks}>{children}</Layout>
+        <Layout onHowItWorks={onHowItWorks} onReport={onReport} onRequest={onRequest}>{children}</Layout>
       </SignedIn>
       <SignedOut>
         <RedirectToSignIn />
@@ -165,6 +168,8 @@ function ProtectedRoute({ children, onHowItWorks }: ProtectedRouteProps): React.
 
 export default function App(): React.JSX.Element {
   const howItWorks = useHowItWorks("reviewarcade")
+  const [reportOpen, setReportOpen] = useState(false)
+  const [requestOpen, setRequestOpen] = useState(false)
 
   return (
     <BrowserRouter>
